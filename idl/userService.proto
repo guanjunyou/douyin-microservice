@@ -1,0 +1,41 @@
+syntax="proto3";
+package services;
+option go_package ="./;pb";
+
+//用户实体
+message User {
+  int64 id = 1;
+  string name = 2;
+  uint32 follow_count = 3;
+  uint32 follower_count = 4;
+  bool is_follow = 5;
+  string avatar = 6;
+  string background_image = 7;
+  string signature = 8;
+  string total_favorited = 9;
+  uint32 work_count = 10;
+  uint32 favorite_count = 11;
+}
+
+//用户登录、注册、信息请求
+message UserRequest{
+  string user_id=1;
+  string username =2;
+  string password=3;
+}
+//用户登录、注册响应
+message UserResponse{
+  int64 user_id =1;
+  string token=2;
+}
+//用户信息响应
+message UserDetailResponse{
+  User user=1;
+}
+
+
+service UserService{
+  rpc UserLogin(UserRequest) returns(UserResponse);
+  rpc UserRegister(UserRequest) returns(UserResponse);
+  rpc UserInfo(UserRequest) returns(UserDetailResponse);
+}
