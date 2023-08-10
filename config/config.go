@@ -12,8 +12,13 @@ type Configuration struct {
 	VideoServer VideoServerConfig `yaml:"VideoServer"`
 	Redis       RedisConfig       `yaml:"Redis"`
 	RabbitMQ    RabbitMQConfig    `yaml:"RabbitMQ"`
+	Etcd        EtcdConfig        `yaml:"Etcd"`
 }
 
+type EtcdConfig struct {
+	Host string `yaml:"Host"`
+	Port string `yaml:"port"`
+}
 type RedisConfig struct {
 	Addr     string `yaml:"Addr"`
 	Password string `yaml:"Password"`
@@ -56,7 +61,6 @@ var (
 	LikeLockTTL float64 = 60
 	UserKey     string  = "user:"
 	UsedrKeyTTL float64 = 3600
-
 	//filter
 	WordDictPath = "./public/sensitiveDict.txt"
 )

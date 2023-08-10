@@ -1,10 +1,14 @@
 package rpc
 
-import "github.com/micro/go-micro"
+import (
+	"douyin-microservice/app/gateway/wrappers"
+	"douyin-microservice/idl/pb"
+	"go-micro.dev/v4"
+)
 
 var (
-	UserService pb.UserService
-	TaskService pb.TaskService
+	UserService  pb.UserService
+	VideoService pb.VideoService
 )
 
 func InitRPC() {
@@ -15,13 +19,13 @@ func InitRPC() {
 	)
 	// 用户服务调用实例
 	userService := pb.NewUserService("rpcUserService", userMicroService.Client())
-	// task
-	taskMicroService := micro.NewService(
-		micro.Name("taskService.client"),
-		micro.WrapClient(wrappers.NewTaskWrapper),
-	)
-	taskService := pb.NewTaskService("rpcTaskService", taskMicroService.Client())
-
 	UserService = userService
-	TaskService = taskService
+	//video模块
+	videoMicroService := micro.NewService(
+		micro.Name("videoService.client"),
+		micro.WrapClient(wrappers.NewVideoWrapper),
+	)
+	// 视频服务调用实例
+	videoService := pb.NewVideoService("rpcVideoService", videoMicroService.Client())
+	VideoService = videoService
 }
