@@ -32,7 +32,9 @@ message UserRequest{
 message UserDetailResponse{
   User user=1;
 }
-
+message SaveRequest{
+  User user=1;
+}
 
 service UserService{
   rpc UserLogin(UserRequest) returns(google.protobuf.Empty);
@@ -40,4 +42,5 @@ service UserService{
   rpc UserInfo(UserRequest) returns(UserDetailResponse);
   rpc GetUserById(UserRequest) returns(UserDetailResponse);
   rpc GetUserByName(UserRequest) returns(UserDetailResponse);
+  rpc Save(SaveRequest) returns(google.protobuf.Empty);
 }

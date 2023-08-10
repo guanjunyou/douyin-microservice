@@ -18,7 +18,7 @@ func main() {
 	config.ReadConfig()
 	rpc.InitRPC()
 	etcdReg := registry.NewRegistry(
-		registry.Addrs(fmt.Sprintf("%s:%s", config.EtcdHost, config.EtcdPort)),
+		registry.Addrs(fmt.Sprintf("%s:%s", config.Config.Etcd.Host, config.Config.Etcd.Port)),
 	)
 
 	// 创建微服务实例，使用gin暴露http接口并注册到etcd

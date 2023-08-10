@@ -2,8 +2,9 @@ package utils
 
 import (
 	"context"
+	"douyin-microservice/config"
 	"fmt"
-	"github.com/RaymondCode/simple-demo/config"
+	//"github.com/RaymondCode/simple-demo/config"
 	"time"
 )
 
