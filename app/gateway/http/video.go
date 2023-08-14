@@ -7,8 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
-	"strconv"
-	"time"
 )
 
 type FeedResponse struct {
@@ -24,18 +22,6 @@ func FeedHandler(c *gin.Context) {
 	var userId int64 = -1
 
 	log.Printf("时间戳", latestTimeStr)
-	var latestTime time.Time
-	if latestTimeStr != "0" {
-		me, _ := strconv.ParseInt(latestTimeStr, 10, 64)
-		latestTime = time.Unix(me, 0)
-		// 前端传入的可能是毫秒级
-		if latestTime.Year() > 9999 {
-			latestTime = time.Unix(me/1000, 0)
-		}
-	} else {
-		latestTime = time.Now()
-	}
-	log.Printf("获取到的时间 %v", latestTime)
 
 	if token != "" {
 		userClaims, err0 := utils.AnalyseToken(token)
