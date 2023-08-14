@@ -19,6 +19,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/mysql v1.5.1
 	gorm.io/gorm v1.25.3
+	github.com/streadway/amqp v1.1.0
 )
 
 require (
