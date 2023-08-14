@@ -7,15 +7,17 @@ replace google.golang.org/grpc => google.golang.org/grpc v1.26.0
 require (
 	github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-redis/redis/v8 v8.11.5
+	github.com/jinzhu/copier v0.3.5
 	github.com/micro/go-micro v1.18.0
+	github.com/sirupsen/logrus v1.9.0
 	go-micro.dev/v4 v4.10.2
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/mysql v1.5.1
 	gorm.io/gorm v1.25.3
-	github.com/gin-contrib/pprof v1.4.0
 )
 
 require (
@@ -56,6 +58,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/handlers v1.5.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
@@ -74,8 +77,6 @@ require (
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/micro/cli v0.2.0 // indirect
 	github.com/micro/mdns v0.3.0 // indirect
-	github.com/micro/micro/v3 v3.19.0 // indirect
-	github.com/micro/protoc-gen-micro v1.0.0 // indirect
 	github.com/miekg/dns v1.1.55 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/hashstructure v1.1.0 // indirect

@@ -13,6 +13,8 @@ import (
 	"go-micro.dev/v4/registry"
 )
 
+var SF *utils.Snowflake
+
 func main() {
 
 	initDeps()
