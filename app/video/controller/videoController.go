@@ -78,6 +78,7 @@ func (v VideoController) PublishList(ctx context.Context, request *pb.PublishLis
 		videoDVOPbList = append(videoDVOPbList, BuildVideoDVO(&publishList[i]))
 	}
 	response.VideoList = videoDVOPbList
+	return nil
 }
 
 func (v VideoController) LikeVideo(ctx context.Context, request *pb.LikeVideoRequest, empty *emptypb.Empty) error {
