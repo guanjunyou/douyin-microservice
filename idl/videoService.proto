@@ -25,6 +25,7 @@ message PublishRequest{
   int64 user_id=2;
   //string token=2;
   string title=3;
+  string file_name=4;
 }
 //视频流响应
 message FeedResponse{

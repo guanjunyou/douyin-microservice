@@ -33,7 +33,7 @@ func main() {
 	// 得到一个微服务实例
 	microService := micro.NewService(
 		micro.Name("rpcTaskService"), // 微服务名字
-		micro.Address(config.VideoServiceAddress),
+		micro.Address(config.Config.VideoService.VideoServiceAddress),
 		micro.Registry(etcdReg), // etcd注册件
 	)
 

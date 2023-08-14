@@ -8,11 +8,12 @@ import (
 )
 
 type Configuration struct {
-	MySQL       string            `yaml:"MySQL"`
-	VideoServer VideoServerConfig `yaml:"VideoServer"`
-	Redis       RedisConfig       `yaml:"Redis"`
-	RabbitMQ    RabbitMQConfig    `yaml:"RabbitMQ"`
-	Etcd        EtcdConfig        `yaml:"Etcd"`
+	MySQL        string             `yaml:"MySQL"`
+	VideoServer  VideoServerConfig  `yaml:"VideoServer"`
+	VideoService VideoServiceConfig `yaml:"VideoService"`
+	Redis        RedisConfig        `yaml:"Redis"`
+	RabbitMQ     RabbitMQConfig     `yaml:"RabbitMQ"`
+	Etcd         EtcdConfig         `yaml:"Etcd"`
 }
 
 type EtcdConfig struct {
@@ -42,6 +43,10 @@ type VideoServerConfig struct {
 			Method string `yaml:"Method"` // POST
 		} `yaml:"Upload"`
 	} `yaml:"Api"`
+}
+
+type VideoServiceConfig struct {
+	VideoServiceAddress string `yaml:"VideoServiceAddress"`
 }
 
 var Config Configuration

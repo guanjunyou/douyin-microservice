@@ -3,9 +3,9 @@ package impl
 import (
 	"douyin-microservice/app/gateway/utils"
 	"douyin-microservice/app/video/models"
+	"douyin-microservice/app/video/service"
+	"douyin-microservice/config"
 	"github.com/jinzhu/copier"
-	"mime/multipart"
-	"path/filepath"
 	"sync"
 	"time"
 )
@@ -64,18 +64,18 @@ func (videoService VideoServiceImpl) GetVideoListByLastTime(latestTime time.Time
 
 // Publish 投稿接口
 // TODO 借助redis协助实现feed流
-func (videoService VideoServiceImpl) Publish(data *multipart.FileHeader, userId int64, title string) error {
+func (videoService VideoServiceImpl) Publish(data []byte, userId int64, title string, filename string) error {
 	//从title中过滤敏感词汇
 	replaceTitle := utils.Filter.Replace(title, '#')
 	//文件名
-	filename := filepath.Base(data.Filename)
+	//filename := filepath.Base(data.Filename)
 	////将文件名拼接用户id
 	//finalName := fmt.Sprintf("%d_%s", userId, filename)
 	////保存文件的路径，暂时保存在本队public文件夹下
 	//saveFile := filepath.Join("./public/", finalName)
 	//保存视频在本地中
 	// if err = c.SaveUploadedFile(data, saveFile); err != nil {
-	coverName, err := utils.UploadToServer(data)
+	coverName, err := utils.UploadToServer(data, filename)
 	if err != nil {
 		return err
 	}

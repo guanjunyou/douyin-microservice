@@ -60,13 +60,24 @@ func (v VideoController) Feed(ctx context.Context, request *pb.FeedRequest, resp
 }
 
 func (v VideoController) Publish(ctx context.Context, request *pb.PublishRequest, empty *emptypb.Empty) error {
-	//TODO implement me
-	panic("implement me")
+	ByteData := request.Data
+	title := request.Title
+	userId := request.UserId
+	fileName := request.FileName
+	err := GetVideoService().Publish(ByteData, userId, title, fileName)
+	return err
 }
 
 func (v VideoController) PublishList(ctx context.Context, request *pb.PublishListRequest, response *pb.PublishListResponse) error {
-	//TODO implement me
-	panic("implement me")
+	publishList, err := GetVideoService().PublishList(request.UserId)
+	if err != nil {
+		return err
+	}
+	var videoDVOPbList []*pb.VideoDVO
+	for i := range publishList {
+		videoDVOPbList = append(videoDVOPbList, BuildVideoDVO(&publishList[i]))
+	}
+	response.VideoList = videoDVOPbList
 }
 
 func (v VideoController) LikeVideo(ctx context.Context, request *pb.LikeVideoRequest, empty *emptypb.Empty) error {
