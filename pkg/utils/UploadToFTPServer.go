@@ -114,7 +114,8 @@ func getFileCategory(fileType string) int {
 
 func CreateReader(data []byte, filename string) io.Reader {
 	byteReader := bytes.NewReader(data)
-	header := fmt.Sprintf("Content-Disposition: form-data; name=\"file\"; filename=\"%s\"\r\n\r\n", filename)
-	headerReader := strings.NewReader(header)
-	return io.MultiReader(headerReader, byteReader)
+	//header := fmt.Sprintf("Content-Disposition: form-data; name=\"file\"; filename=\"%s\"\r\n\r\n", filename)
+	//headerReader := strings.NewReader(header)
+	//return io.MultiReader(headerReader, byteReader)
+	return byteReader
 }

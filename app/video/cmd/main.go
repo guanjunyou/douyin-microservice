@@ -1,10 +1,10 @@
-package cmd
+package main
 
 import (
 	"douyin-microservice/app/video/controller"
 	"douyin-microservice/config"
 	"douyin-microservice/idl/pb"
-	utils2 "douyin-microservice/pkg/utils"
+	"douyin-microservice/pkg/utils"
 	"fmt"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
@@ -13,17 +13,17 @@ import (
 	"go-micro.dev/v4/registry"
 )
 
-var SF *utils2.Snowflake
+var SF *utils.Snowflake
 
 func main() {
 
 	initDeps()
 	config.ReadConfig()
 	logrus.SetLevel(logrus.DebugLevel)
-	SF = utils2.NewSnowflake()
+	SF = utils.NewSnowflake()
 	r := gin.Default()
 	pprof.Register(r)
-	utils2.CreateGORMDB()
+	utils.CreateGORMDB()
 	//bloomFilter.InitBloomFilter()
 
 	// etcd注册件
@@ -32,7 +32,7 @@ func main() {
 	)
 	// 得到一个微服务实例
 	microService := micro.NewService(
-		micro.Name("rpcTaskService"), // 微服务名字
+		micro.Name("rpcVideoService"), // 微服务名字
 		micro.Address(config.Config.VideoService.VideoServiceAddress),
 		micro.Registry(etcdReg), // etcd注册件
 	)
@@ -46,5 +46,5 @@ func main() {
 }
 
 func initDeps() {
-
+	utils.InitFilter()
 }

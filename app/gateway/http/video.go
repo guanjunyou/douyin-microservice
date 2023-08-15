@@ -3,7 +3,7 @@ package http
 import (
 	"douyin-microservice/app/gateway/rpc"
 	"douyin-microservice/idl/pb"
-	utils2 "douyin-microservice/pkg/utils"
+	"douyin-microservice/pkg/utils"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"log"
@@ -14,13 +14,13 @@ import (
 )
 
 type FeedResponse struct {
-	utils2.Response
+	utils.Response
 	VideoList []*pb.VideoDVO `json:"video_list,omitempty"`
 	NextTime  int64          `json:"next_time,omitempty"`
 }
 
 type VideoListResponse struct {
-	utils2.Response
+	utils.Response
 	VideoList []*pb.VideoDVO `json:"video_list"`
 }
 
@@ -33,7 +33,7 @@ func FeedHandler(c *gin.Context) {
 	log.Printf("时间戳", latestTimeStr)
 
 	if token != "" {
-		userClaims, err0 := utils2.AnalyseToken(token)
+		userClaims, err0 := utils.AnalyseToken(token)
 		if err0 != nil {
 			log.Println("解析token失败")
 		}
@@ -44,14 +44,14 @@ func FeedHandler(c *gin.Context) {
 	feedReq.UserId = userId
 	feedResp, err := rpc.Feed(c, &feedReq)
 	if err != nil {
-		c.JSON(http.StatusOK, utils2.Response{
+		c.JSON(http.StatusOK, utils.Response{
 			StatusCode: 1,
 			StatusMsg:  err.Error(),
 		})
 	}
 
 	c.JSON(http.StatusOK, FeedResponse{
-		Response:  utils2.Response{StatusCode: 0},
+		Response:  utils.Response{StatusCode: 0},
 		VideoList: feedResp.VideoList,
 		NextTime:  feedResp.NextTime,
 	})
@@ -61,11 +61,11 @@ func PublishHandler(c *gin.Context) {
 	var publishReq pb.PublishRequest
 	//1.获取token并解析出user_id、data、title
 	token := c.PostForm("token")
-	userClaims, _ := utils2.AnalyseToken(token)
+	userClaims, _ := utils.AnalyseToken(token)
 	userId := userClaims.CommonEntity.Id
 	data, err := c.FormFile("data")
 	if err != nil {
-		c.JSON(http.StatusOK, utils2.Response{
+		c.JSON(http.StatusOK, utils.Response{
 			StatusCode: 1,
 			StatusMsg:  err.Error(),
 		})
@@ -80,13 +80,13 @@ func PublishHandler(c *gin.Context) {
 	//2. 调用service层处理业务逻辑
 	err = rpc.Pubilsh(c, &publishReq)
 	if err != nil {
-		c.JSON(http.StatusOK, utils2.Response{
+		c.JSON(http.StatusOK, utils.Response{
 			StatusCode: 1,
 			StatusMsg:  err.Error(),
 		})
 		return
 	}
-	c.JSON(http.StatusOK, utils2.Response{
+	c.JSON(http.StatusOK, utils.Response{
 		StatusCode: 0,
 		StatusMsg:  "投稿成功！",
 	})
@@ -99,7 +99,7 @@ func PublishListHandler(c *gin.Context) {
 	userId, err := strconv.ParseInt(c.Query("user_id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusOK, VideoListResponse{
-			Response: utils2.Response{
+			Response: utils.Response{
 				StatusCode: 1,
 				StatusMsg:  "类型转换错误",
 			},
@@ -110,7 +110,7 @@ func PublishListHandler(c *gin.Context) {
 	publishListResp, err := rpc.PublishList(c, &publishListReq)
 	if err != nil {
 		c.JSON(http.StatusOK, VideoListResponse{
-			Response: utils2.Response{
+			Response: utils.Response{
 				StatusCode: 1,
 				StatusMsg:  "数据库异常",
 			},
@@ -118,7 +118,7 @@ func PublishListHandler(c *gin.Context) {
 		})
 	}
 	c.JSON(http.StatusOK, VideoListResponse{
-		Response: utils2.Response{
+		Response: utils.Response{
 			StatusCode: 0,
 			StatusMsg:  "查询成功",
 		},

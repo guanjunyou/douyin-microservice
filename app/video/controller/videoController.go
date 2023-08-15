@@ -35,7 +35,7 @@ func (v VideoController) Feed(ctx context.Context, request *pb.FeedRequest, resp
 	var videoDVOList []models.VideoDVO
 	var err error
 	var latestTime time.Time
-	if request.LatestTime != "0" {
+	if request.LatestTime != "" {
 		me, _ := strconv.ParseInt(request.LatestTime, 10, 64)
 		latestTime = time.Unix(me, 0)
 		// 前端传入的可能是毫秒级
