@@ -18,7 +18,7 @@ type Configuration struct {
 
 type EtcdConfig struct {
 	Host string `yaml:"Host"`
-	Port string `yaml:"port"`
+	Port string `yaml:"Port"`
 }
 type RedisConfig struct {
 	Addr     string `yaml:"Addr"`
