@@ -1,6 +1,8 @@
 package models
 
-import "douyin-microservice/app/gateway/utils"
+import (
+	"douyin-microservice/pkg/utils"
+)
 
 type CommentMQToVideo struct {
 	utils.CommonEntity

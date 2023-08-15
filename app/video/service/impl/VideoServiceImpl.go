@@ -1,10 +1,10 @@
 package impl
 
 import (
-	"douyin-microservice/app/gateway/utils"
 	"douyin-microservice/app/video/models"
 	"douyin-microservice/app/video/service"
 	"douyin-microservice/config"
+	"douyin-microservice/pkg/utils"
 	"github.com/jinzhu/copier"
 	"sync"
 	"time"

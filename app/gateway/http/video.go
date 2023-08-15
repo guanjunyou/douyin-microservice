@@ -2,8 +2,8 @@ package http
 
 import (
 	"douyin-microservice/app/gateway/rpc"
-	"douyin-microservice/app/gateway/utils"
 	"douyin-microservice/idl/pb"
+	"douyin-microservice/pkg/utils"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"log"

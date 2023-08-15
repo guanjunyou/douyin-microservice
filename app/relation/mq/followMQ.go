@@ -1,12 +1,9 @@
 package mq
 
 import (
-	"douyin-microservice/app/gateway/utils"
 	"douyin-microservice/app/relation/models"
 	"douyin-microservice/config"
-	"encoding/json"
 	"github.com/streadway/amqp"
-	"log"
 )
 
 type FollowMQ struct {
@@ -99,38 +96,38 @@ func (followMQ *FollowMQ) Publish(message string) {
 //	go followMQ.consumer(messages)
 //}
 
-func (followMQ *FollowMQ) consumer(message <-chan amqp.Delivery) {
-	for d := range message {
-		// Handle the received message
-		var data models.FollowMQToUser
-		err := json.Unmarshal(d.Body, &data)
-		if err != nil {
-			log.Printf("Error decoding message: %v", err)
-			continue
-		}
-		// Now, process the follow action based on the data received
-		follow := models.Follow{
-			UserId:       data.UserId,
-			FollowUserId: data.FollowUserId,
-		}
-		switch data.ActionType {
-		case 1: // Follow action
-			err := follow.Insert(utils.GetMysqlDB())
-			if err != nil {
-				log.Printf("Error inserting follow record: %v", err)
-				continue
-			}
-		case 2: // Unfollow action
-			err := follow.Delete(utils.GetMysqlDB())
-			if err != nil {
-				log.Printf("Error deleting follow record: %v", err)
-				continue
-			}
-		default:
-			log.Printf("Invalid action type received: %d", data.ActionType)
-		}
-	}
-}
+//func (followMQ *FollowMQ) consumer(message <-chan amqp.Delivery) {
+//	for d := range message {
+//		// Handle the received message
+//		var data models.FollowMQToUser
+//		err := json.Unmarshal(d.Body, &data)
+//		if err != nil {
+//			log.Printf("Error decoding message: %v", err)
+//			continue
+//		}
+//		// Now, process the follow action based on the data received
+//		follow := models.Follow{
+//			UserId:       data.UserId,
+//			FollowUserId: data.FollowUserId,
+//		}
+//		switch data.ActionType {
+//		case 1: // Follow action
+//			err := follow.Insert(utils.GetMysqlDB())
+//			if err != nil {
+//				log.Printf("Error inserting follow record: %v", err)
+//				continue
+//			}
+//		case 2: // Unfollow action
+//			err := follow.Delete(utils.GetMysqlDB())
+//			if err != nil {
+//				log.Printf("Error deleting follow record: %v", err)
+//				continue
+//			}
+//		default:
+//			log.Printf("Invalid action type received: %d", data.ActionType)
+//		}
+//	}
+//}
 
 var FollowRMQ *FollowMQ
 

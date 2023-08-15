@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"douyin-microservice/app/gateway/utils"
 	"douyin-microservice/config"
+	"douyin-microservice/pkg/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"

@@ -2,9 +2,9 @@ package impl
 
 import (
 	"context"
-	"douyin-microservice/app/gateway/utils"
 	"douyin-microservice/app/video/models"
 	"douyin-microservice/config"
+	"douyin-microservice/pkg/utils"
 	"strconv"
 )
 
