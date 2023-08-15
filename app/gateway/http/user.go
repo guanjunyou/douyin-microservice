@@ -81,7 +81,7 @@ func UserInfoHandler(c *gin.Context) {
 		})
 	} else {
 		c.JSON(http.StatusOK, UserResponse{
-			Response: utils.Response{StatusCode: 0},
+			Response: utils.Response{StatusCode: 0, StatusMsg: "查询个人信息成功"},
 			User:     dbUser2User(*resp.User),
 		})
 	}
