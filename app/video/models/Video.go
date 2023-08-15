@@ -2,6 +2,7 @@ package models
 
 import (
 	"douyin-microservice/config"
+	"douyin-microservice/idl/pb"
 	utils2 "douyin-microservice/pkg/utils"
 	"gorm.io/gorm"
 	"time"
@@ -21,13 +22,13 @@ type Video struct {
 
 type VideoDVO struct {
 	utils2.CommonEntity
-	Author        User   `json:"author"`
-	PlayUrl       string `json:"play_url"`
-	CoverUrl      string `json:"cover_url"`
-	FavoriteCount int64  `json:"favorite_count"`
-	CommentCount  int64  `json:"comment_count"`
-	IsFavorite    bool   `json:"is_favorite"`
-	Title         string `json:"title,omitempty"`
+	Author        *pb.User `json:"author"`
+	PlayUrl       string   `json:"play_url"`
+	CoverUrl      string   `json:"cover_url"`
+	FavoriteCount int64    `json:"favorite_count"`
+	CommentCount  int64    `json:"comment_count"`
+	IsFavorite    bool     `json:"is_favorite"`
+	Title         string   `json:"title,omitempty"`
 }
 
 func (table *Video) TableName() string {

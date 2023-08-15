@@ -2,6 +2,7 @@ package main
 
 import (
 	"douyin-microservice/app/video/controller"
+	"douyin-microservice/app/video/rpc"
 	"douyin-microservice/config"
 	"douyin-microservice/idl/pb"
 	"douyin-microservice/pkg/utils"
@@ -42,6 +43,7 @@ func main() {
 	// 服务注册
 	_ = pb.RegisterVideoServiceHandler(microService.Server(), controller.GetVideoController())
 	// 启动微服务
+	rpc.NewRpcUserServiceClient()
 	_ = microService.Run()
 }
 
