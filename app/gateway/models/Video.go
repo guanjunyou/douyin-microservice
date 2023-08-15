@@ -1,8 +1,8 @@
 package models
 
 import (
-	"douyin-microservice/app/gateway/utils"
 	"douyin-microservice/idl/pb"
+	"douyin-microservice/pkg/utils"
 )
 
 type VideoDVO struct {

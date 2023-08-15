@@ -1,13 +1,13 @@
-package cmd
+package main
 
 import (
 	"fmt"
-	"github.com/micro/go-micro/registry"
-	"github.com/micro/go-micro/web"
+	//"github.com/micro/go-micro/registry"
+	//"github.com/micro/go-micro/web"
 	"time"
 
-	//"go-micro.dev/v4/registry"
-	//"go-micro.dev/v4/web"
+	"go-micro.dev/v4/registry"
+	"go-micro.dev/v4/web"
 
 	"douyin-microservice/app/gateway/router"
 	"douyin-microservice/app/gateway/rpc"

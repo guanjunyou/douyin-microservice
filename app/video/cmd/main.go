@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"douyin-microservice/app/gateway/utils"
 	"douyin-microservice/app/video/controller"
 	"douyin-microservice/config"
 	"douyin-microservice/idl/pb"
+	utils2 "douyin-microservice/pkg/utils"
 	"fmt"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
@@ -13,22 +13,22 @@ import (
 	"go-micro.dev/v4/registry"
 )
 
-var SF *utils.Snowflake
+var SF *utils2.Snowflake
 
 func main() {
 
 	initDeps()
 	config.ReadConfig()
 	logrus.SetLevel(logrus.DebugLevel)
-	SF = utils.NewSnowflake()
+	SF = utils2.NewSnowflake()
 	r := gin.Default()
 	pprof.Register(r)
-	utils.CreateGORMDB()
-	bloomFilter.InitBloomFilter()
+	utils2.CreateGORMDB()
+	//bloomFilter.InitBloomFilter()
 
 	// etcd注册件
 	etcdReg := registry.NewRegistry(
-		registry.Addrs(fmt.Sprintf("%s:%s", config.EtcdHost, config.EtcdPort)),
+		registry.Addrs(fmt.Sprintf("%s:%s", config.Config.Etcd.Host, config.Config.Etcd.Port)),
 	)
 	// 得到一个微服务实例
 	microService := micro.NewService(

@@ -1,10 +1,10 @@
 package impl
 
 import (
-	"douyin-microservice/app/gateway/utils"
 	"douyin-microservice/app/video/models"
 	"douyin-microservice/app/video/service"
 	"douyin-microservice/config"
+	utils2 "douyin-microservice/pkg/utils"
 	"github.com/jinzhu/copier"
 	"sync"
 	"time"
@@ -66,7 +66,7 @@ func (videoService VideoServiceImpl) GetVideoListByLastTime(latestTime time.Time
 // TODO 借助redis协助实现feed流
 func (videoService VideoServiceImpl) Publish(data []byte, userId int64, title string, filename string) error {
 	//从title中过滤敏感词汇
-	replaceTitle := utils.Filter.Replace(title, '#')
+	replaceTitle := utils2.Filter.Replace(title, '#')
 	//文件名
 	//filename := filepath.Base(data.Filename)
 	////将文件名拼接用户id
@@ -75,7 +75,7 @@ func (videoService VideoServiceImpl) Publish(data []byte, userId int64, title st
 	//saveFile := filepath.Join("./public/", finalName)
 	//保存视频在本地中
 	// if err = c.SaveUploadedFile(data, saveFile); err != nil {
-	coverName, err := utils.UploadToServer(data, filename)
+	coverName, err := utils2.UploadToServer(data, filename)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func (videoService VideoServiceImpl) Publish(data []byte, userId int64, title st
 	//coverName := name + ".png"
 	//保存视频在数据库中
 	video := models.Video{
-		CommonEntity: utils.NewCommonEntity(),
+		CommonEntity: utils2.NewCommonEntity(),
 		AuthorId:     userId,
 		PlayUrl:      "http://" + config.Config.VideoServer.Addr2 + "/videos/" + filename,
 		CoverUrl:     "http://" + config.Config.VideoServer.Addr2 + "/photos/" + coverName,
@@ -101,7 +101,7 @@ func (videoService VideoServiceImpl) Publish(data []byte, userId int64, title st
 	}
 	//用户发布作品数加1
 	user.WorkCount = user.WorkCount + 1
-	err = models.UpdateUser(utils.GetMysqlDB(), user)
+	err = models.UpdateUser(utils2.GetMysqlDB(), user)
 	if err != nil {
 		return err
 	}

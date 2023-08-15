@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"douyin-microservice/app/gateway/utils"
 	"douyin-microservice/config"
+	utils2 "douyin-microservice/pkg/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
@@ -32,15 +32,15 @@ func RefreshHandler() gin.HandlerFunc {
 			return
 		}
 		//3.解析token
-		userClaims, err := utils.AnalyseToken(token)
+		userClaims, err := utils2.AnalyseToken(token)
 		if err != nil || userClaims == nil || userClaims.IsDeleted == 1 {
 			return
 		}
 		//4.根据token查redis
-		tokenFromRedis, err := utils.GetTokenFromRedis(userClaims.Name)
+		tokenFromRedis, err := utils2.GetTokenFromRedis(userClaims.Name)
 		if tokenFromRedis == "" {
 			//4.1 如果token可以被正确解析，重建redis缓存
-			err := utils.SaveTokenToRedis(userClaims.Name, token, time.Duration(config.TokenTTL*float64(time.Second)))
+			err := utils2.SaveTokenToRedis(userClaims.Name, token, time.Duration(config.TokenTTL*float64(time.Second)))
 			if err != nil {
 
 				c.JSON(http.StatusForbidden, gin.H{"StatusCode": "1", "StatusMsg": "服务器异常"})
@@ -50,7 +50,7 @@ func RefreshHandler() gin.HandlerFunc {
 			return
 		}
 		//6.刷新token的有效期
-		err = utils.RefreshToken(userClaims.Name, time.Duration(config.TokenTTL*float64(time.Second)))
+		err = utils2.RefreshToken(userClaims.Name, time.Duration(config.TokenTTL*float64(time.Second)))
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{"StatusCode": "1", "StatusMsg": "用户未登录"})
 			return
@@ -77,7 +77,7 @@ func AuthAdminCheck() gin.HandlerFunc {
 		if token == "" {
 			token = c.PostForm("token")
 		}
-		userClaims, err := utils.AnalyseToken(token)
+		userClaims, err := utils2.AnalyseToken(token)
 		if err != nil || userClaims == nil || userClaims.IsDeleted == 1 {
 			c.JSON(http.StatusOK, gin.H{"StatusCode": "1", "StatusMsg": "用户未登录"})
 			//阻止该请求
@@ -85,7 +85,7 @@ func AuthAdminCheck() gin.HandlerFunc {
 			return
 		}
 		//3.根据token查redis
-		tokenFromRedis, err := utils.GetTokenFromRedis(userClaims.Name)
+		tokenFromRedis, err := utils2.GetTokenFromRedis(userClaims.Name)
 		if tokenFromRedis == "" || err != nil {
 			c.JSON(http.StatusOK, gin.H{"StatusCode": "1", "StatusMsg": "用户未登录"})
 			//阻止该请求

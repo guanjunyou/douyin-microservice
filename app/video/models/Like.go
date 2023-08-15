@@ -1,19 +1,19 @@
 package models
 
 import (
-	"douyin-microservice/app/gateway/utils"
+	utils2 "douyin-microservice/pkg/utils"
 	"gorm.io/gorm"
 )
 
 // 点赞接口的参数
 type Like struct {
-	utils.CommonEntity
+	utils2.CommonEntity
 	VideoId int64 `json:"videoId" gorm:"column:video_id"` //点赞的视频
 	UserId  int64 `json:"userId" gorm:"column:user_id"`   //点赞的用户
 }
 
 type VideoListResponse2 struct {
-	utils.Response
+	utils2.Response
 	VideoList []LikeVedioListDVO `json:"video_list"`
 }
 
@@ -48,7 +48,7 @@ func (l *Like) Update(tx *gorm.DB) (err error) {
 
 // Insert 插入记录
 func (l *Like) Insert(tx *gorm.DB) (err error) {
-	l.CommonEntity = utils.NewCommonEntity()
+	l.CommonEntity = utils2.NewCommonEntity()
 	err = tx.Create(l).Error
 	return
 }
@@ -62,7 +62,7 @@ func (l *Like) Delete(tx *gorm.DB) (err error) {
 // FindByUserIdAndVedioId 通过userId和VedioId查找
 func (l *Like) FindByUserIdAndVedioId() (res *Like, err error) {
 	res = &Like{}
-	err = utils.GetMysqlDB().Model(Like{}).Where("video_id = ? and user_id = ? and is_deleted = 0", l.VideoId, l.UserId).Find(res).Error
+	err = utils2.GetMysqlDB().Model(Like{}).Where("video_id = ? and user_id = ? and is_deleted = 0", l.VideoId, l.UserId).Find(res).Error
 	return
 }
 
@@ -74,7 +74,7 @@ func (l *Like) CountByUserIdAndVedioId(tx *gorm.DB) (res *Like, err error) {
 
 // GetLikeVedioListDVO 查询喜欢的视频列表
 func (l *Like) GetLikeVedioListDVO(userId int64) ([]LikeVedioListDVO, error) {
-	tx := utils.GetMysqlDB()
+	tx := utils2.GetMysqlDB()
 	var err error
 	res := make([]LikeVedioListDVO, 0)
 	err = tx.Table("`like` l").Select("v.*").Joins(`LEFT JOIN video v ON l.video_id = v.id`).Where("l.user_id = ? and l.is_deleted = 0", userId).Preload("Author").Find(&res).Error
@@ -84,7 +84,7 @@ func (l *Like) GetLikeVedioListDVO(userId int64) ([]LikeVedioListDVO, error) {
 
 // GetLikeVedioListDVO 查询喜欢的视频Id
 func (l *Like) GetLikeVedioIdList(userId int64) ([]int64, error) {
-	tx := utils.GetMysqlDB()
+	tx := utils2.GetMysqlDB()
 	var err error
 	res := make([]int64, 0)
 	err = tx.Table(l.TableName()).Select("video_id").Where("user_id = ? and is_deleted = 0", userId).Find(&res).Error
