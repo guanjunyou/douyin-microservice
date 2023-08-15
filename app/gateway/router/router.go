@@ -16,8 +16,8 @@ func InitRouter() *gin.Engine {
 	apiRouter.Use(middleware.RefreshHandler())
 	// basic    apis
 	apiRouter.GET("/feed/", http.FeedHandler)
-	//apiRouter.POST("/user/register/", http.RegisterHandler)
-	//apiRouter.POST("/user/login/", http.LoginHandler)
+	apiRouter.POST("/user/register/", http.RegisterHandler)
+	apiRouter.POST("/user/login/", http.LoginHandler)
 
 	//apiRouter2 := r.Group("/douyin")
 	apiRouter.Use(middleware.RefreshHandler(), middleware.AuthAdminCheck())

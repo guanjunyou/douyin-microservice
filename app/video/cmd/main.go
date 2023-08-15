@@ -1,10 +1,10 @@
-package cmd
+package main
 
 import (
-	"douyin-microservice/app/gateway/utils"
 	"douyin-microservice/app/video/controller"
 	"douyin-microservice/config"
 	"douyin-microservice/idl/pb"
+	"douyin-microservice/pkg/utils"
 	"fmt"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
