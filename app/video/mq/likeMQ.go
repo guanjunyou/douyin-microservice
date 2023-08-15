@@ -1,14 +1,13 @@
 package mq
 
 import (
-	"douyin-microservice/app/relation/mq"
 	"douyin-microservice/app/video/models"
 	"douyin-microservice/config"
 	"github.com/streadway/amqp"
 )
 
 type LikeMQ struct {
-	mq.RabbitMQ
+	RabbitMQ
 	Channel        *amqp.Channel
 	QueueUserName  string
 	QueueVideoName string
@@ -28,14 +27,14 @@ func MakeLikeChannel() {
 // NewLikeRabbitMQ 获取likeMQ的对应队列。
 func NewLikeRabbitMQ() *LikeMQ {
 	likeMQ := &LikeMQ{
-		RabbitMQ:       *mq.Rmq,
+		RabbitMQ:       *Rmq,
 		QueueUserName:  "userLikeMQ",
 		QueueVideoName: "videoLikeMQ",
 		exchange:       "likeExchange",
 	}
 	ch, err := likeMQ.conn.Channel()
 	likeMQ.Channel = ch
-	mq.Rmq.failOnErr(err, "获取通道失败")
+	Rmq.failOnErr(err, "获取通道失败")
 	return likeMQ
 }
 

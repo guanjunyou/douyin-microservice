@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"douyin-microservice/app/gateway/utils"
@@ -24,15 +24,15 @@ func main() {
 	r := gin.Default()
 	pprof.Register(r)
 	utils.CreateGORMDB()
-	bloomFilter.InitBloomFilter()
+	//bloomFilter.InitBloomFilter()
 
 	// etcd注册件
 	etcdReg := registry.NewRegistry(
-		registry.Addrs(fmt.Sprintf("%s:%s", config.EtcdHost, config.EtcdPort)),
+		registry.Addrs(fmt.Sprintf("%s:%s", config.Config.Etcd.Host, config.Config.Etcd.Port)),
 	)
 	// 得到一个微服务实例
 	microService := micro.NewService(
-		micro.Name("rpcTaskService"), // 微服务名字
+		micro.Name("rpcVideoService"), // 微服务名字
 		micro.Address(config.Config.VideoService.VideoServiceAddress),
 		micro.Registry(etcdReg), // etcd注册件
 	)

@@ -11,7 +11,7 @@ import (
 )
 
 type VideoServiceImpl struct {
-	service.UserService
+	//service.UserService
 	service.FavoriteService
 }
 
@@ -25,23 +25,23 @@ func (videoService VideoServiceImpl) GetVideoListByLastTime(latestTime time.Time
 	}
 	var err0 error
 	for i := range videolist {
-		var authorId = videolist[i].AuthorId
+		//var authorId = videolist[i].AuthorId
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
 			// 通过 videoService 来调用 userService
-			user, err1 := videoService.UserService.GetUserById(authorId)
-			if err1 != nil {
-				err0 = err1
-				return
-			}
+			//user, err1 := videoService.UserService.GetUserById(authorId)
+			//if err1 != nil {
+			//	err0 = err1
+			//	return
+			//}
 			var videoDVO models.VideoDVO
 			err2 := copier.Copy(&videoDVO, &videolist[i])
 			if err2 != nil {
 				err0 = err2
 				return
 			}
-			videoDVO.Author = user
+			//videoDVO.Author = user
 			if userId != -1 {
 				videoDVO.IsFavorite = videoService.FavoriteService.FindIsFavouriteByUserIdAndVideoId(userId, videoDVO.Id)
 			} else {

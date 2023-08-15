@@ -1,7 +1,6 @@
 package mq
 
 import (
-	"douyin-microservice/app/relation/mq"
 	"douyin-microservice/app/video/models"
 	"douyin-microservice/config"
 	"github.com/streadway/amqp"
@@ -9,7 +8,7 @@ import (
 )
 
 type CommentMQ struct {
-	mq.RabbitMQ
+	RabbitMQ
 	channel   *amqp.Channel
 	queueName string
 	exchange  string
@@ -26,12 +25,12 @@ func MakeCommentChannel() {
 // NewCommentRabbitMQ  获取commentMQ的对应管道。
 func NewCommentRabbitMQ() *CommentMQ {
 	commentMQ := &CommentMQ{
-		RabbitMQ:  *mq.Rmq,
+		RabbitMQ:  *Rmq,
 		queueName: "commentMQ",
 	}
 	ch, err := commentMQ.conn.Channel()
 	commentMQ.channel = ch
-	mq.Rmq.failOnErr(err, "获取通道失败")
+	Rmq.failOnErr(err, "获取通道失败")
 	return commentMQ
 }
 

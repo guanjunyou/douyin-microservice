@@ -1,0 +1,70 @@
+syntax="proto3";
+package services;
+option go_package ="./;pb";
+import "relationService.proto";
+import "google/protobuf/empty.proto";
+import "userService.proto";
+
+message RelationActionRequest {
+  int64 user_id=1;
+  int64 to_user_id=2;
+  int64 action_type=3;
+}
+
+message FollowListRequest {
+  int64 user_id=1;
+}
+
+message FollowListResponse {
+  repeated User follow_user=1;
+}
+
+message FollowerListRequest {
+  int64 user_id=1;
+}
+
+message FollowerListResponse {
+  repeated User follower_user=1;
+}
+
+message FriendListRequest {
+  int64 user_id=1;
+}
+
+message FriendListResponse {
+  repeated User friend_user=1;
+}
+
+message MessageActionResquest {
+  int64 user_id=1;
+  int64 to_user_id=2;
+  string content=3;
+}
+
+message MessageChatRequest {
+  int64 user_id=1;
+  int64 to_user_id=2;
+}
+
+message MessageDVO {
+  int64 id=1;
+  int64 to_user_id=2;
+  int64 user_id=3;
+  string content=4;
+  int64 create_time=5;
+}
+
+message MessageChatResponse {
+  repeated MessageDVO message_list=1;
+}
+
+service RelationService {
+  rpc RelationAction(RelationActionRequest) returns(google.protobuf.Empty);
+  rpc FollowList(FollowerListRequest) returns(FollowerListResponse);
+  rpc FollowerList(FollowerListRequest) returns(FollowerListResponse);
+  rpc FriendList(FriendListRequest) returns(FriendListResponse);
+  rpc MessageAction(MessageActionResquest) returns(google.protobuf.Empty);
+  rpc MessageChat(MessageChatRequest) returns(MessageChatResponse);
+}
+
+
