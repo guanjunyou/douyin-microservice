@@ -1,11 +1,15 @@
 package impl
 
 import (
+	"context"
 	"douyin-microservice/app/video/models"
+	"douyin-microservice/app/video/rpc"
 	"douyin-microservice/app/video/service"
 	"douyin-microservice/config"
+	"douyin-microservice/idl/pb"
 	"douyin-microservice/pkg/utils"
 	"github.com/jinzhu/copier"
+	"log"
 	"sync"
 	"time"
 )
@@ -25,7 +29,7 @@ func (videoService VideoServiceImpl) GetVideoListByLastTime(latestTime time.Time
 	}
 	var err0 error
 	for i := range videolist {
-		//var authorId = videolist[i].AuthorId
+		var authorId = videolist[i].AuthorId
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -35,13 +39,20 @@ func (videoService VideoServiceImpl) GetVideoListByLastTime(latestTime time.Time
 			//	err0 = err1
 			//	return
 			//}
+			var userReq pb.UserRequest
+			userReq.UserId = authorId
+			userResp, err1 := rpc.UserClient.GetUserById(context.Background(), &userReq)
+			if err1 != nil {
+				err0 = err1
+				return
+			}
 			var videoDVO models.VideoDVO
 			err2 := copier.Copy(&videoDVO, &videolist[i])
 			if err2 != nil {
 				err0 = err2
 				return
 			}
-			//videoDVO.Author = user
+			videoDVO.Author = userResp.User
 			if userId != -1 {
 				videoDVO.IsFavorite = videoService.FavoriteService.FindIsFavouriteByUserIdAndVideoId(userId, videoDVO.Id)
 			} else {
@@ -135,7 +146,7 @@ func (videoService VideoServiceImpl) PublishList(userId int64) ([]models.VideoDV
 			if err != nil {
 				err0 = err1
 			}
-			videoDVO.Author = user
+			videoDVO.Author = BuildUser(&user)
 			VideoDVOList[i] = videoDVO
 		}(i)
 	}
@@ -145,4 +156,13 @@ func (videoService VideoServiceImpl) PublishList(userId int64) ([]models.VideoDV
 		return nil, err0
 	}
 	return VideoDVOList, nil
+}
+
+func BuildUser(user *models.User) *pb.User {
+	var userPb pb.User
+	err := copier.Copy(&userPb, &user)
+	if err != nil {
+		log.Println(err.Error())
+	}
+	return &userPb
 }
