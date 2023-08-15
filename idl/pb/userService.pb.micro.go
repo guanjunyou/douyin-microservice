@@ -6,7 +6,6 @@ package pb
 import (
 	fmt "fmt"
 	proto "google.golang.org/protobuf/proto"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	math "math"
 )
 
@@ -37,12 +36,11 @@ func NewUserServiceEndpoints() []*api.Endpoint {
 // Client API for UserService service
 
 type UserService interface {
-	UserLogin(ctx context.Context, in *UserRequest, opts ...client.CallOption) (*emptypb.Empty, error)
-	UserRegister(ctx context.Context, in *UserRequest, opts ...client.CallOption) (*emptypb.Empty, error)
+	UserLogin(ctx context.Context, in *UserRequest, opts ...client.CallOption) (*UserResponse, error)
+	UserRegister(ctx context.Context, in *UserRequest, opts ...client.CallOption) (*UserResponse, error)
 	UserInfo(ctx context.Context, in *UserRequest, opts ...client.CallOption) (*UserDetailResponse, error)
 	GetUserById(ctx context.Context, in *UserRequest, opts ...client.CallOption) (*UserDetailResponse, error)
 	GetUserByName(ctx context.Context, in *UserRequest, opts ...client.CallOption) (*UserDetailResponse, error)
-	Save(ctx context.Context, in *SaveRequest, opts ...client.CallOption) (*emptypb.Empty, error)
 }
 
 type userService struct {
@@ -57,9 +55,9 @@ func NewUserService(name string, c client.Client) UserService {
 	}
 }
 
-func (c *userService) UserLogin(ctx context.Context, in *UserRequest, opts ...client.CallOption) (*emptypb.Empty, error) {
+func (c *userService) UserLogin(ctx context.Context, in *UserRequest, opts ...client.CallOption) (*UserResponse, error) {
 	req := c.c.NewRequest(c.name, "UserService.UserLogin", in)
-	out := new(emptypb.Empty)
+	out := new(UserResponse)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -67,9 +65,9 @@ func (c *userService) UserLogin(ctx context.Context, in *UserRequest, opts ...cl
 	return out, nil
 }
 
-func (c *userService) UserRegister(ctx context.Context, in *UserRequest, opts ...client.CallOption) (*emptypb.Empty, error) {
+func (c *userService) UserRegister(ctx context.Context, in *UserRequest, opts ...client.CallOption) (*UserResponse, error) {
 	req := c.c.NewRequest(c.name, "UserService.UserRegister", in)
-	out := new(emptypb.Empty)
+	out := new(UserResponse)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -107,35 +105,23 @@ func (c *userService) GetUserByName(ctx context.Context, in *UserRequest, opts .
 	return out, nil
 }
 
-func (c *userService) Save(ctx context.Context, in *SaveRequest, opts ...client.CallOption) (*emptypb.Empty, error) {
-	req := c.c.NewRequest(c.name, "UserService.Save", in)
-	out := new(emptypb.Empty)
-	err := c.c.Call(ctx, req, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // Server API for UserService service
 
 type UserServiceHandler interface {
-	UserLogin(context.Context, *UserRequest, *emptypb.Empty) error
-	UserRegister(context.Context, *UserRequest, *emptypb.Empty) error
+	UserLogin(context.Context, *UserRequest, *UserResponse) error
+	UserRegister(context.Context, *UserRequest, *UserResponse) error
 	UserInfo(context.Context, *UserRequest, *UserDetailResponse) error
 	GetUserById(context.Context, *UserRequest, *UserDetailResponse) error
 	GetUserByName(context.Context, *UserRequest, *UserDetailResponse) error
-	Save(context.Context, *SaveRequest, *emptypb.Empty) error
 }
 
 func RegisterUserServiceHandler(s server.Server, hdlr UserServiceHandler, opts ...server.HandlerOption) error {
 	type userService interface {
-		UserLogin(ctx context.Context, in *UserRequest, out *emptypb.Empty) error
-		UserRegister(ctx context.Context, in *UserRequest, out *emptypb.Empty) error
+		UserLogin(ctx context.Context, in *UserRequest, out *UserResponse) error
+		UserRegister(ctx context.Context, in *UserRequest, out *UserResponse) error
 		UserInfo(ctx context.Context, in *UserRequest, out *UserDetailResponse) error
 		GetUserById(ctx context.Context, in *UserRequest, out *UserDetailResponse) error
 		GetUserByName(ctx context.Context, in *UserRequest, out *UserDetailResponse) error
-		Save(ctx context.Context, in *SaveRequest, out *emptypb.Empty) error
 	}
 	type UserService struct {
 		userService
@@ -148,11 +134,11 @@ type userServiceHandler struct {
 	UserServiceHandler
 }
 
-func (h *userServiceHandler) UserLogin(ctx context.Context, in *UserRequest, out *emptypb.Empty) error {
+func (h *userServiceHandler) UserLogin(ctx context.Context, in *UserRequest, out *UserResponse) error {
 	return h.UserServiceHandler.UserLogin(ctx, in, out)
 }
 
-func (h *userServiceHandler) UserRegister(ctx context.Context, in *UserRequest, out *emptypb.Empty) error {
+func (h *userServiceHandler) UserRegister(ctx context.Context, in *UserRequest, out *UserResponse) error {
 	return h.UserServiceHandler.UserRegister(ctx, in, out)
 }
 
@@ -166,8 +152,4 @@ func (h *userServiceHandler) GetUserById(ctx context.Context, in *UserRequest, o
 
 func (h *userServiceHandler) GetUserByName(ctx context.Context, in *UserRequest, out *UserDetailResponse) error {
 	return h.UserServiceHandler.GetUserByName(ctx, in, out)
-}
-
-func (h *userServiceHandler) Save(ctx context.Context, in *SaveRequest, out *emptypb.Empty) error {
-	return h.UserServiceHandler.Save(ctx, in, out)
 }

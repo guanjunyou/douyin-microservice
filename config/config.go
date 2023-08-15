@@ -8,12 +8,13 @@ import (
 )
 
 type Configuration struct {
-	MySQL        string             `yaml:"MySQL"`
-	VideoServer  VideoServerConfig  `yaml:"VideoServer"`
-	VideoService VideoServiceConfig `yaml:"VideoService"`
-	Redis        RedisConfig        `yaml:"Redis"`
-	RabbitMQ     RabbitMQConfig     `yaml:"RabbitMQ"`
-	Etcd         EtcdConfig         `yaml:"Etcd"`
+	MySQL              string             `yaml:"MySQL"`
+	VideoServer        VideoServerConfig  `yaml:"VideoServer"`
+	VideoService       VideoServiceConfig `yaml:"VideoService"`
+	Redis              RedisConfig        `yaml:"Redis"`
+	RabbitMQ           RabbitMQConfig     `yaml:"RabbitMQ"`
+	Etcd               EtcdConfig         `yaml:"Etcd"`
+	UserServiceAddress string             `yaml:"UserServiceAddress"`
 }
 
 type EtcdConfig struct {

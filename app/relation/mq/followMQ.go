@@ -1,9 +1,9 @@
 package mq
 
 import (
-	"douyin-microservice/app/gateway/utils"
 	"douyin-microservice/app/relation/models"
 	"douyin-microservice/config"
+	"douyin-microservice/pkg/utils"
 	"encoding/json"
 	"github.com/streadway/amqp"
 	"log"
