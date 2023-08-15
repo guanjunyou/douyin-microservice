@@ -18,10 +18,10 @@ func InitRouter() *gin.Engine {
 	apiRouter.GET("/feed/", http.FeedHandler)
 	//apiRouter.POST("/user/register/", http.RegisterHandler)
 	//apiRouter.POST("/user/login/", http.LoginHandler)
-	//
-	////apiRouter2 := r.Group("/douyin")
-	//apiRouter.Use(middleware.AuthAdminCheck())
-	//// extra apis - I
+
+	//apiRouter2 := r.Group("/douyin")
+	apiRouter.Use(middleware.RefreshHandler(), middleware.AuthAdminCheck())
+	// extra apis - I
 	//apiRouter.POST("/favorite/action/", http.FavoriteActionHandler)
 	//apiRouter.GET("/favorite/list/", http.FavoriteListHandler)
 	//apiRouter.POST("/comment/action/", http.CommentActionHandler)
@@ -34,7 +34,7 @@ func InitRouter() *gin.Engine {
 	//apiRouter.GET("/relation/friend/list/", http.FriendListHandler)
 	//apiRouter.GET("/message/chat/", http.MessageChatHandler)
 	//apiRouter.POST("/message/action/", http.MessageActionHandler)
-	//
+
 	//apiRouter.GET("/user/", http.UserInfoHandler)
 	apiRouter.POST("/publish/action/", http.PublishHandler)
 	apiRouter.GET("/publish/list/", http.PublishListHandler)

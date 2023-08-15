@@ -46,5 +46,5 @@ func main() {
 }
 
 func initDeps() {
-
+	utils.InitFilter()
 }
