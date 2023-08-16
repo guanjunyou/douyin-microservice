@@ -52,7 +52,7 @@ func (videoService VideoServiceImpl) GetVideoListByLastTime(latestTime time.Time
 				err0 = err2
 				return
 			}
-			videoDVO.Author = userResp.User
+			videoDVO.Author = BuildUser(userResp.User)
 			if userId != -1 {
 				videoDVO.IsFavorite = videoService.FavoriteService.FindIsFavouriteByUserIdAndVideoId(userId, videoDVO.Id)
 			} else {
@@ -136,17 +136,19 @@ func (videoService VideoServiceImpl) PublishList(userId int64) ([]models.VideoDV
 		go func(i int) {
 			defer wg.Done()
 			var userId = videoList[i].AuthorId
-			//一定要通过videoService来调用 userSevice
-			user, err1 := models.GetUserById(userId)
+			var userReq pb.UserRequest
+			userReq.UserId = userId
+			userResp, err1 := rpc.UserClient.GetUserById(context.Background(), &userReq)
 			if err1 != nil {
 				err0 = err1
+				return
 			}
 			var videoDVO models.VideoDVO
 			err := copier.Copy(&videoDVO, &videoList[i])
 			if err != nil {
 				err0 = err1
 			}
-			videoDVO.Author = BuildUser(&user)
+			videoDVO.Author = BuildUser(userResp.User)
 			VideoDVOList[i] = videoDVO
 		}(i)
 	}
@@ -158,11 +160,11 @@ func (videoService VideoServiceImpl) PublishList(userId int64) ([]models.VideoDV
 	return VideoDVOList, nil
 }
 
-func BuildUser(user *models.User) *pb.User {
-	var userPb pb.User
-	err := copier.Copy(&userPb, &user)
+func BuildUser(userPb *pb.User) models.User {
+	var user models.User
+	err := copier.Copy(&user, &userPb)
 	if err != nil {
 		log.Println(err.Error())
 	}
-	return &userPb
+	return user
 }

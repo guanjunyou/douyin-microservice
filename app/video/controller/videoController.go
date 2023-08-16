@@ -5,6 +5,7 @@ import (
 	"douyin-microservice/app/video/models"
 	"douyin-microservice/app/video/service/impl"
 	"douyin-microservice/idl/pb"
+	"github.com/jinzhu/copier"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"log"
 	"strconv"
@@ -112,10 +113,19 @@ func GetVideoController() *VideoController {
 	return videoController
 }
 
+func BuildUserPb(user *models.User) *pb.User {
+	var userPb pb.User
+	err := copier.Copy(&userPb, &user)
+	if err != nil {
+		log.Println(err.Error())
+	}
+	return &userPb
+}
+
 func BuildVideoDVO(videoDVO *models.VideoDVO) *pb.VideoDVO {
 	videoDVOPb := pb.VideoDVO{
 		Id:            videoDVO.Id,
-		Author:        videoDVO.Author,
+		Author:        BuildUserPb(&videoDVO.Author),
 		PlayUrl:       videoDVO.PlayUrl,
 		CoverUrl:      videoDVO.CoverUrl,
 		FavoriteCount: videoDVO.FavoriteCount,
