@@ -191,7 +191,7 @@ func (userService UserServiceImpl) likeConsume(message <-chan amqp.Delivery) {
 	for d := range message {
 		jsonData := string(d.Body)
 		log.Printf("user收到的消息为 %s\n", jsonData)
-		data := model.LikeMQToUser{}
+		data := mq.LikeMQToUser{}
 		err := json.Unmarshal([]byte(jsonData), &data)
 		if err != nil {
 			panic(err)
@@ -199,10 +199,10 @@ func (userService UserServiceImpl) likeConsume(message <-chan amqp.Delivery) {
 		userId := data.UserId
 		tx := utils.GetMysqlDB().Begin()
 		//获得当前用户
-		user, err := models.GetUserById(userId)
+		user, err := model.GetUserById(userId)
 
 		//查询视频作者
-		author, err2 := models.GetUserById(data.AuthorId)
+		author, err2 := model.GetUserById(data.AuthorId)
 		if err2 != nil {
 			panic(err2)
 		}
@@ -215,7 +215,7 @@ func (userService UserServiceImpl) likeConsume(message <-chan amqp.Delivery) {
 			if user.Id == author.Id {
 				user.TotalFavorited++
 			}
-			err = models.UpdateUser(tx, user)
+			err = model.UpdateUser(tx, user)
 			if err != nil {
 				log.Println("err:", err)
 				tx.Rollback()
@@ -224,7 +224,7 @@ func (userService UserServiceImpl) likeConsume(message <-chan amqp.Delivery) {
 			if user.Id != author.Id {
 				//总点赞数+1
 				author.TotalFavorited = author.TotalFavorited + 1
-				err = models.UpdateUser(tx, author)
+				err = model.UpdateUser(tx, author)
 				if err != nil {
 					log.Println("err:", err)
 					tx.Rollback()
@@ -239,7 +239,7 @@ func (userService UserServiceImpl) likeConsume(message <-chan amqp.Delivery) {
 			if user.Id == author.Id {
 				user.TotalFavorited--
 			}
-			err = models.UpdateUser(tx, user)
+			err = model.UpdateUser(tx, user)
 			if err != nil {
 				log.Println("err:", err)
 				tx.Rollback()
@@ -248,7 +248,7 @@ func (userService UserServiceImpl) likeConsume(message <-chan amqp.Delivery) {
 			//总点赞数-1
 			if user.Id != author.Id {
 				author.TotalFavorited = author.TotalFavorited - 1
-				err = models.UpdateUser(tx, author)
+				err = model.UpdateUser(tx, author)
 				if err != nil {
 					log.Println("err:", err)
 					tx.Rollback()
