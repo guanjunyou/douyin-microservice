@@ -23,6 +23,11 @@ func GetController() *UserController {
 	return userController
 }
 
+func GetService() impl.UserServiceImpl {
+	var userService1 impl.UserServiceImpl
+	return userService1
+}
+
 var userService = impl.GetUserService()
 
 func (u UserController) UserLogin(ctx context.Context, request *pb.UserRequest, response *pb.UserResponse) error {

@@ -8,13 +8,14 @@ import (
 )
 
 type Configuration struct {
-	MySQL              string             `yaml:"MySQL"`
-	VideoServer        VideoServerConfig  `yaml:"VideoServer"`
-	VideoService       VideoServiceConfig `yaml:"VideoService"`
-	Redis              RedisConfig        `yaml:"Redis"`
-	RabbitMQ           RabbitMQConfig     `yaml:"RabbitMQ"`
-	Etcd               EtcdConfig         `yaml:"Etcd"`
-	UserServiceAddress string             `yaml:"UserServiceAddress"`
+	MySQL              string                `yaml:"MySQL"`
+	VideoServer        VideoServerConfig     `yaml:"VideoServer"`
+	VideoService       VideoServiceConfig    `yaml:"VideoService"`
+	RelationService    RelationServiceConfig `yaml:"RelationService"`
+	Redis              RedisConfig           `yaml:"Redis"`
+	RabbitMQ           RabbitMQConfig        `yaml:"RabbitMQ"`
+	Etcd               EtcdConfig            `yaml:"Etcd"`
+	UserServiceAddress string                `yaml:"UserServiceAddress"`
 }
 
 type EtcdConfig struct {
@@ -49,6 +50,9 @@ type VideoServerConfig struct {
 type VideoServiceConfig struct {
 	VideoServiceAddress string `yaml:"VideoServiceAddress"`
 }
+type RelationServiceConfig struct {
+	RelationServiceAddress string `yaml:"RelationServiceAddress"`
+}
 
 var Config Configuration
 
@@ -58,15 +62,21 @@ var (
 	VideoCount  = 5
 	BufferSize  = 1000
 	// redis
-	TokenTTL    float64 = 3600
-	TokenKey    string  = "token:"
-	LikeKey     string  = "Like:"
-	LikeKeyTTL  float64 = 3600
-	LikeLock    string  = "likeLock"
-	UnLikeLock  string  = "unLikeLock"
-	LikeLockTTL float64 = 60
-	UserKey     string  = "user:"
-	UsedrKeyTTL float64 = 3600
+	TokenTTL      float64 = 3600
+	TokenKey      string  = "token:"
+	LikeKey       string  = "Like:"
+	LikeKeyTTL    float64 = 3600
+	LikeLock      string  = "likeLock"
+	UnLikeLock    string  = "unLikeLock"
+	LikeLockTTL   float64 = 60
+	UserKey       string  = "user:"
+	UsedrKeyTTL   float64 = 3600
+	FollowLock    string  = "followLock:"
+	UnFollowLock  string  = "unFollowLock:"
+	FollowLockTTL float64 = 60
+	FollowKey     string  = "follow:"
+	FollowerKey   string  = "follower:"
+	FollowKeyTTL  float64 = 3600
 	//filter
 	WordDictPath = "./public/sensitiveDict.txt"
 )

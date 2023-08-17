@@ -7,8 +7,9 @@ import (
 )
 
 var (
-	UserService  pb.UserService
-	VideoService pb.VideoService
+	UserService     pb.UserService
+	VideoService    pb.VideoService
+	RelationService pb.RelationService
 )
 
 func InitRPC() {
@@ -28,4 +29,13 @@ func InitRPC() {
 	// 视频服务调用实例
 	videoService := pb.NewVideoService("rpcVideoService", videoMicroService.Client())
 	VideoService = videoService
+
+	//Relation模块
+	relationMicroService := micro.NewService(
+		micro.Name("relationService.client"),
+		micro.WrapClient(wrappers.NewRelationWrapper),
+	)
+	// 视频服务调用实例
+	relationService := pb.NewRelationService("rpcRelationService", relationMicroService.Client())
+	RelationService = relationService
 }
