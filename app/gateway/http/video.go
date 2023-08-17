@@ -9,6 +9,7 @@ import (
 	"douyin-microservice/pkg/utils/resultutil"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/copier"
 	"io/ioutil"
 	"log"
 	"mime/multipart"
@@ -266,6 +267,7 @@ func CommentActionHandler(c *gin.Context) {
 		video_id := c.Query("video_id")
 		var postReq pb.PostCommentsRequest
 		postReq.VideoId = video_id
+		postReq.Comment = BuildCommentDb(comment)
 		_, err := rpc.VideoService.PostComments(c, &postReq)
 		if err != nil {
 			log.Println(err)
@@ -335,4 +337,23 @@ func BuildComment(commentDb *pb.Comment) models.Comment {
 		Content:      commentDb.Content,
 	}
 	return comment
+}
+
+func BuildCommentDb(comment models.Comment) *pb.Comment {
+	commentPb := pb.Comment{
+		Id:         comment.Id,
+		User:       BuildUserPb(&comment.User),
+		Content:    comment.Content,
+		CreateDate: comment.CreateDate.Format(config.DateLayout),
+	}
+	return &commentPb
+}
+
+func BuildUserPb(user *models.User) *pb.User {
+	var userPb pb.User
+	err := copier.Copy(&userPb, &user)
+	if err != nil {
+		log.Println(err.Error())
+	}
+	return &userPb
 }

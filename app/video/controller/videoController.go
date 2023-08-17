@@ -58,6 +58,7 @@ func (v VideoController) Feed(ctx context.Context, request *pb.FeedRequest, resp
 		videoDVOPbList = append(videoDVOPbList, BuildVideoDVO(&videoDVOList[i]))
 	}
 	response.VideoList = videoDVOPbList
+	log.Println(response)
 	return nil
 }
 

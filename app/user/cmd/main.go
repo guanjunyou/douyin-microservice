@@ -7,6 +7,7 @@ import (
 	"douyin-microservice/config"
 	"douyin-microservice/idl/pb"
 	"douyin-microservice/pkg/utils"
+	"douyin-microservice/pkg/utils/bloomFilter"
 	"fmt"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
@@ -48,7 +49,10 @@ func main() {
 }
 
 func initDeps() {
+	bloomFilter.InitBloomFilter()
 	mq.InitRabbitMQ()
 	mq.InitFollowRabbitMQ()
+	mq.InitLikeRabbitMQ()
 	impl.GetUserService().MakeFollowConsumers()
+	impl.GetUserService().MakeLikeConsumers()
 }
