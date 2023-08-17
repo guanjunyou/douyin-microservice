@@ -93,7 +93,7 @@ service VideoService{
   rpc Publish(PublishRequest) returns(google.protobuf.Empty);
   rpc PublishList(PublishListRequest) returns(PublishListResponse);
   rpc LikeVideo(LikeVideoRequest) returns(google.protobuf.Empty);
-  rpc QueryVideosOfLike(QueryVideosOfLikeRequest) returns(google.protobuf.Empty);
+  rpc QueryVideosOfLike(QueryVideosOfLikeRequest) returns(QueryVideosOfLikeResponse);
   rpc PostComments(PostCommentsRequest) returns(google.protobuf.Empty);
   rpc DeleteComments(DeleteCommentsRequest) returns(google.protobuf.Empty);
   rpc CommentList(CommentListRequest) returns(CommentListResponse);

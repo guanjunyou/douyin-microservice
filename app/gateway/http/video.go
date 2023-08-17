@@ -2,8 +2,12 @@ package http
 
 import (
 	"douyin-microservice/app/gateway/rpc"
+	"douyin-microservice/app/video/models"
+	"douyin-microservice/config"
 	"douyin-microservice/idl/pb"
 	"douyin-microservice/pkg/utils"
+	"douyin-microservice/pkg/utils/resultutil"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"log"
@@ -11,6 +15,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strconv"
+	"time"
 )
 
 type FeedResponse struct {
@@ -18,7 +23,22 @@ type FeedResponse struct {
 	VideoList []*pb.VideoDVO `json:"video_list,omitempty"`
 	NextTime  int64          `json:"next_time,omitempty"`
 }
+type CommentListResponse struct {
+	utils.Response
+	CommentList []models.Comment `json:"comment_list,omitempty"`
+}
 
+type CommentActionResponse struct {
+	utils.Response
+	Comment models.Comment `json:"comment,omitempty"`
+}
+
+// 接收点赞的结构体
+type FavoriteActionReq struct {
+	Token      string `form:"token"`
+	VideoId    string `form:"video_id"`    // 视频id
+	ActionType string `form:"action_type"` // 1-点赞，2-取消点赞
+}
 type VideoListResponse struct {
 	utils.Response
 	VideoList []*pb.VideoDVO `json:"video_list"`
@@ -130,4 +150,189 @@ func FileHeaderToBytes(data *multipart.FileHeader) []byte {
 	dataFile, _ := data.Open()
 	dataBytes, _ := ioutil.ReadAll(dataFile)
 	return dataBytes
+}
+
+func FavoriteActionHandler(c *gin.Context) {
+	var faReq FavoriteActionReq
+	if err := c.ShouldBind(&faReq); err != nil {
+		log.Printf("点赞操作，绑定参数发生异常：%v \n", err)
+		resultutil.GenFail(c, "参数错误")
+		return
+	}
+	fmt.Printf("参数 %+v \n", faReq)
+
+	videoId, err := strconv.ParseInt(faReq.VideoId, 10, 64)
+
+	if err != nil {
+		log.Printf("点赞操作，videoId字符串转换发生异常 = %v", err)
+		resultutil.GenFail(c, "参数错误")
+		return
+	}
+
+	// 从Token中获取Uid
+	var userClaim *utils.UserClaims
+	userClaim, err = utils.AnalyseToken(faReq.Token)
+
+	if err != nil {
+		log.Printf("解析token发生异常 = %v", err)
+		return
+	}
+	userId := userClaim.CommonEntity.Id
+
+	var actionType int
+	actionType, err = strconv.Atoi(faReq.ActionType)
+
+	if err != nil {
+		log.Printf("点赞操作，actionType字符串转换发生异常 = %v", err)
+		resultutil.GenFail(c, "参数错误")
+		return
+	}
+	var req pb.LikeVideoRequest
+	req.UserId = userId
+	req.VideoId = strconv.FormatInt(videoId, 10)
+	req.ActionType = int32(actionType)
+	if err = rpc.LikeVideo(c, &req); err != nil {
+		log.Printf("点赞发生异常 = %v", err)
+		if err.Error() == "-1" {
+			resultutil.GenFail(c, "该视频已点赞")
+			return
+		}
+
+		if err.Error() == "-2" {
+			resultutil.GenFail(c, "未找到要取消的点赞记录")
+			return
+		}
+
+		resultutil.GenFail(c, "点赞发生错误")
+		return
+	}
+
+	resultutil.GenSuccessWithMsg(c, "success")
+}
+func FavoriteListHandler(c *gin.Context) {
+	userIdStr := c.Query("user_id")
+
+	//userId, err := strconv.ParseInt(userIdStr, 10, 64)
+	var req pb.QueryVideosOfLikeRequest
+	req.UserId = userIdStr
+	resp, err := rpc.QueryVideosOfLike(c, &req)
+	if err != nil {
+		log.Printf("获取喜欢列表，获取发生异常 = %v", err)
+		resultutil.GenFail(c, "获取失败")
+		return
+	}
+	var videoList []models.LikeVedioListDVO
+	for i := range resp.VideoList {
+		videoList = append(videoList, BuildLikeVideo(*resp.VideoList[i]))
+	}
+	c.JSON(http.StatusOK, models.VideoListResponse2{
+		Response: utils.Response{
+			StatusCode: 0,
+			StatusMsg:  "success",
+		},
+		VideoList: videoList,
+	})
+}
+func CommentActionHandler(c *gin.Context) {
+	token := c.Query("token")
+	actionType := c.Query("action_type")
+
+	userClaim, err := utils.AnalyseToken(token)
+	if err != nil {
+		c.JSON(http.StatusOK, utils.Response{StatusCode: 1, StatusMsg: "Token is invalid"})
+		return
+	}
+	var userReq pb.UserRequest
+	userReq.Username = userClaim.Name
+	resp, err := rpc.UserService.GetUserByName(c, &userReq)
+	user := DbUser2User(*resp.User)
+	if err != nil {
+		c.JSON(http.StatusOK, utils.Response{StatusCode: 1, StatusMsg: "User doesn't exist"})
+		return
+	}
+	if actionType == "1" {
+		text := c.Query("comment_text")
+		utils.InitFilter()
+
+		textAfterFilter := utils.Filter.Replace(text, '*')
+
+		comment := models.Comment{
+			CommonEntity: utils.NewCommonEntity(),
+			//Id:         1,
+			User:    user,
+			Content: textAfterFilter,
+		}
+
+		video_id := c.Query("video_id")
+		var postReq pb.PostCommentsRequest
+		postReq.VideoId = video_id
+		_, err := rpc.VideoService.PostComments(c, &postReq)
+		if err != nil {
+			log.Println(err)
+			c.JSON(http.StatusBadRequest, utils.Response{StatusCode: 1, StatusMsg: "Comment failed"})
+			return
+		}
+
+		c.JSON(http.StatusOK, CommentActionResponse{Response: utils.Response{StatusCode: 0, StatusMsg: ""},
+			Comment: comment})
+		return
+	} else if actionType == "2" {
+		//comment_id := parseCommetId(c)
+		commentId := c.Query("comment_id")
+		var deleteReq pb.DeleteCommentsRequest
+		deleteReq.CommentId, _ = strconv.ParseInt(commentId, 10, 64)
+		_, err := rpc.VideoService.DeleteComments(c, &deleteReq)
+		if err != nil {
+			log.Println(err)
+			c.JSON(http.StatusBadRequest, utils.Response{StatusCode: 1, StatusMsg: "Delete comment failed"})
+			return
+		}
+		c.JSON(http.StatusOK, utils.Response{StatusCode: 0})
+		return
+	}
+	c.JSON(http.StatusOK, utils.Response{StatusCode: 0})
+}
+func CommentListHandler(c *gin.Context) {
+	videoIdStr := c.Query("video_id")
+	var req pb.CommentListRequest
+	videoId, _ := strconv.ParseInt(videoIdStr, 10, 64)
+	req.VideoId = videoId
+	resp, _ := rpc.VideoService.CommentList(c, &req)
+	list := resp.Comments
+	var commentList []models.Comment
+	for i := range list {
+		commentList = append(commentList, BuildComment(list[i]))
+	}
+	c.JSON(http.StatusOK, CommentListResponse{
+		Response:    utils.Response{StatusCode: 0, StatusMsg: "Comment list"},
+		CommentList: commentList,
+	})
+}
+
+func BuildLikeVideo(videoPb pb.VideoDVO) models.LikeVedioListDVO {
+	user := DbUser2User(*videoPb.Author)
+	likeVideo := models.LikeVedioListDVO{
+		Video: models.Video{
+			CommonEntity:  utils.CommonEntity{Id: videoPb.Id},
+			AuthorId:      videoPb.Author.Id,
+			PlayUrl:       videoPb.PlayUrl,
+			CoverUrl:      videoPb.CoverUrl,
+			FavoriteCount: videoPb.FavoriteCount,
+			CommentCount:  videoPb.CommentCount,
+			IsFavorite:    videoPb.IsFavorite,
+			Title:         videoPb.Title,
+		},
+		Author: &user,
+	}
+	return likeVideo
+}
+
+func BuildComment(commentDb *pb.Comment) models.Comment {
+	createDate, _ := time.Parse(config.DateLayout, commentDb.CreateDate)
+	comment := models.Comment{
+		CommonEntity: utils.CommonEntity{Id: commentDb.Id, CreateDate: createDate, IsDeleted: 0},
+		User:         DbUser2User(*commentDb.User),
+		Content:      commentDb.Content,
+	}
+	return comment
 }

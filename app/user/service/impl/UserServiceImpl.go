@@ -2,9 +2,13 @@ package impl
 
 import (
 	"douyin-microservice/app/user/model"
+	"douyin-microservice/app/user/mq"
+	"douyin-microservice/app/video/models"
 	"douyin-microservice/config"
 	"douyin-microservice/pkg/utils"
+	"encoding/json"
 	"errors"
+	"github.com/streadway/amqp"
 	"sync"
 
 	"golang.org/x/crypto/bcrypt"
@@ -152,221 +156,118 @@ func (userService UserServiceImpl) Login(username string, password string) (int6
 	return user.Id, token, nil
 }
 
-//
-//// LikeConsume  消费"userLikeMQ"中的消息
-//func (userService UserServiceImpl) LikeConsume(l *mq.LikeMQ) {
-//	_, err := l.Channel.QueueDeclare(l.QueueUserName, true, false, false, false, nil)
-//	if err != nil {
-//		panic(err)
-//	}
-//	//2、接收消息
-//	messages, err1 := l.Channel.Consume(
-//		l.QueueUserName,
-//		//用来区分多个消费者
-//		"",
-//		//是否自动应答
-//		true,
-//		//是否具有排他性
-//		false,
-//		//如果设置为true，表示不能将同一个connection中发送的消息传递给这个connection中的消费者
-//		false,
-//		//消息队列是否阻塞
-//		false,
-//		nil,
-//	)
-//	if err1 != nil {
-//		panic(err1)
-//	}
-//	go userService.likeConsume(messages)
-//	//forever := make(chan bool)
-//	//log.Println(messages)
-//
-//	log.Printf("[*] Waiting for messagees,To exit press CTRL+C")
-//}
-//
-//// FollowConsume  消费"followMQ"中的消息
-//func (userService UserServiceImpl) FollowConsume(followMQ *mq.FollowMQ) {
-//	_, err := followMQ.Channel.QueueDeclare(followMQ.QueueName, true, false, false, false, nil)
-//	if err != nil {
-//		panic(err)
-//	}
-//
-//	messages, err1 := followMQ.Channel.Consume(
-//		followMQ.QueueName,
-//		//用来区分多个消费者
-//		"",
-//		//是否自动应答
-//		true,
-//		//是否具有排他性
-//		false,
-//		//如果设置为true，表示不能将同一个connection中发送的消息传递给这个connection中的消费者
-//		false,
-//		//消息队列是否阻塞
-//		false,
-//		nil,
-//	)
-//	if err1 != nil {
-//		panic(err1)
-//	}
-//	go userService.followConsume(messages)
-//	//forever := make(chan bool)
-//	//log.Println(messages)
-//
-//	log.Printf("[*] Waiting for messagees,To exit press CTRL+C")
-//}
-//
-//// 点赞具体消费逻辑
-//func (userService UserServiceImpl) likeConsume(message <-chan amqp.Delivery) {
-//	for d := range message {
-//		jsonData := string(d.Body)
-//		log.Printf("user收到的消息为 %s\n", jsonData)
-//		data := models.LikeMQToUser{}
-//		err := json.Unmarshal([]byte(jsonData), &data)
-//		if err != nil {
-//			panic(err)
-//		}
-//		userId := data.UserId
-//		tx := utils.GetMysqlDB().Begin()
-//		//获得当前用户
-//		user, err := models.GetUserById(userId)
-//
-//		//查询视频作者
-//		author, err2 := models.GetUserById(data.AuthorId)
-//		if err2 != nil {
-//			panic(err2)
-//		}
-//		actionType := data.ActionType
-//
-//		if actionType == 1 {
-//			//喜欢数量+一
-//			user.FavoriteCount = user.FavoriteCount + 1
-//			//如果是同一个作者，在同一个事务中必须保证针对同一行的操作只出现一次
-//			if user.Id == author.Id {
-//				user.TotalFavorited++
-//			}
-//			err = models.UpdateUser(tx, user)
-//			if err != nil {
-//				log.Println("err:", err)
-//				tx.Rollback()
-//				panic(err)
-//			}
-//			if user.Id != author.Id {
-//				//总点赞数+1
-//				author.TotalFavorited = author.TotalFavorited + 1
-//				err = models.UpdateUser(tx, author)
-//				if err != nil {
-//					log.Println("err:", err)
-//					tx.Rollback()
-//					panic(err)
-//				}
-//			}
-//
-//		} else {
-//			//喜欢数量-1
-//			user.FavoriteCount = user.FavoriteCount - 1
-//			//如果是同一个作者，在同一个事务中必须保证针对同一行的操作只出现一次
-//			if user.Id == author.Id {
-//				user.TotalFavorited--
-//			}
-//			err = models.UpdateUser(tx, user)
-//			if err != nil {
-//				log.Println("err:", err)
-//				tx.Rollback()
-//				panic(err)
-//			}
-//			//总点赞数-1
-//			if user.Id != author.Id {
-//				author.TotalFavorited = author.TotalFavorited - 1
-//				err = models.UpdateUser(tx, author)
-//				if err != nil {
-//					log.Println("err:", err)
-//					tx.Rollback()
-//					panic(err)
-//				}
-//			}
-//		}
-//		tx.Commit()
-//	}
-//}
-//
-//// 关注具体消费逻辑
-//func (userService UserServiceImpl) followConsume(message <-chan amqp.Delivery) {
-//	for d := range message {
-//		jsonData := string(d.Body)
-//		log.Printf("user收到的消息为 %s\n", jsonData)
-//		data := models.FollowMQToUser{}
-//		err := json.Unmarshal([]byte(jsonData), &data)
-//		if err != nil {
-//			panic(err)
-//		}
-//		userId := data.UserId
-//		tx := utils.GetMysqlDB().Begin()
-//		//获得当前用户
-//		user, err := models.GetUserById(userId)
-//
-//		//查询视频作者
-//		toUser, err2 := models.GetUserById(data.FollowUserId)
-//		if err2 != nil {
-//			panic(err2)
-//		}
-//		actionType := data.ActionType
-//
-//		if actionType == 1 {
-//			//喜欢数量+一
-//			user.FollowCount = user.FollowCount + 1
-//			err = models.UpdateUser(tx, user)
-//			if err != nil {
-//				log.Println("err:", err)
-//				tx.Rollback()
-//				panic(err)
-//			}
-//			//总点赞数+1
-//			toUser.FollowerCount = toUser.FollowerCount + 1
-//			err = models.UpdateUser(tx, toUser)
-//			if err != nil {
-//				log.Println("err:", err)
-//				tx.Rollback()
-//				panic(err)
-//			}
-//
-//		} else {
-//			//喜欢数量-1
-//			user.FollowCount = user.FollowCount - 1
-//
-//			err = models.UpdateUser(tx, user)
-//			if err != nil {
-//				log.Println("err:", err)
-//				tx.Rollback()
-//				panic(err)
-//			}
-//			//总点赞数-1
-//			toUser.FollowerCount = toUser.FollowerCount - 1
-//			err = models.UpdateUser(tx, toUser)
-//			if err != nil {
-//				log.Println("err:", err)
-//				tx.Rollback()
-//				panic(err)
-//			}
-//		}
-//		tx.Commit()
-//	}
-//}
-//
-//// 创建点赞消费者协程
-//func (userService UserServiceImpl) MakeLikeConsumers() {
-//	numConsumers := 20
-//	for i := 0; i < numConsumers; i++ {
-//		go userService.LikeConsume(mq.LikeRMQ)
-//	}
-//}
-//
-//// 创建关注消费者协程
-//func (userService UserServiceImpl) MakeFollowConsumers() {
-//	numConsumers := 20
-//	for i := 0; i < numConsumers; i++ {
-//		go userService.FollowConsume(mq.FollowRMQ)
-//	}
-//}
+// LikeConsume  消费"userLikeMQ"中的消息
+func (userService UserServiceImpl) LikeConsume(l *mq.LikeMQ) {
+	_, err := l.Channel.QueueDeclare(l.QueueUserName, true, false, false, false, nil)
+	if err != nil {
+		panic(err)
+	}
+	//2、接收消息
+	messages, err1 := l.Channel.Consume(
+		l.QueueUserName,
+		//用来区分多个消费者
+		"",
+		//是否自动应答
+		true,
+		//是否具有排他性
+		false,
+		//如果设置为true，表示不能将同一个connection中发送的消息传递给这个connection中的消费者
+		false,
+		//消息队列是否阻塞
+		false,
+		nil,
+	)
+	if err1 != nil {
+		panic(err1)
+	}
+	go userService.likeConsume(messages)
+	//forever := make(chan bool)
+	//log.Println(messages)
+
+	log.Printf("[*] Waiting for messagees,To exit press CTRL+C")
+}
+
+// 点赞具体消费逻辑
+func (userService UserServiceImpl) likeConsume(message <-chan amqp.Delivery) {
+	for d := range message {
+		jsonData := string(d.Body)
+		log.Printf("user收到的消息为 %s\n", jsonData)
+		data := models.LikeMQToUser{}
+		err := json.Unmarshal([]byte(jsonData), &data)
+		if err != nil {
+			panic(err)
+		}
+		userId := data.UserId
+		tx := utils.GetMysqlDB().Begin()
+		//获得当前用户
+		user, err := models.GetUserById(userId)
+
+		//查询视频作者
+		author, err2 := models.GetUserById(data.AuthorId)
+		if err2 != nil {
+			panic(err2)
+		}
+		actionType := data.ActionType
+
+		if actionType == 1 {
+			//喜欢数量+一
+			user.FavoriteCount = user.FavoriteCount + 1
+			//如果是同一个作者，在同一个事务中必须保证针对同一行的操作只出现一次
+			if user.Id == author.Id {
+				user.TotalFavorited++
+			}
+			err = models.UpdateUser(tx, user)
+			if err != nil {
+				log.Println("err:", err)
+				tx.Rollback()
+				panic(err)
+			}
+			if user.Id != author.Id {
+				//总点赞数+1
+				author.TotalFavorited = author.TotalFavorited + 1
+				err = models.UpdateUser(tx, author)
+				if err != nil {
+					log.Println("err:", err)
+					tx.Rollback()
+					panic(err)
+				}
+			}
+
+		} else {
+			//喜欢数量-1
+			user.FavoriteCount = user.FavoriteCount - 1
+			//如果是同一个作者，在同一个事务中必须保证针对同一行的操作只出现一次
+			if user.Id == author.Id {
+				user.TotalFavorited--
+			}
+			err = models.UpdateUser(tx, user)
+			if err != nil {
+				log.Println("err:", err)
+				tx.Rollback()
+				panic(err)
+			}
+			//总点赞数-1
+			if user.Id != author.Id {
+				author.TotalFavorited = author.TotalFavorited - 1
+				err = models.UpdateUser(tx, author)
+				if err != nil {
+					log.Println("err:", err)
+					tx.Rollback()
+					panic(err)
+				}
+			}
+		}
+		tx.Commit()
+	}
+}
+
+// 创建点赞消费者协程
+func (userService UserServiceImpl) MakeLikeConsumers() {
+	numConsumers := 20
+	for i := 0; i < numConsumers; i++ {
+		go userService.LikeConsume(mq.LikeRMQ)
+	}
+}
 
 func (userService UserServiceImpl) UserInfo(userId int64) (*model.User, error) {
 	//userClaims, err := utils.AnalyseToken(token)

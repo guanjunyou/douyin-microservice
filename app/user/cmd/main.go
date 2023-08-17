@@ -2,6 +2,8 @@ package main
 
 import (
 	"douyin-microservice/app/user/controller"
+	"douyin-microservice/app/user/mq"
+	"douyin-microservice/app/user/service/impl"
 	"douyin-microservice/config"
 	"douyin-microservice/idl/pb"
 	"douyin-microservice/pkg/utils"
@@ -46,5 +48,7 @@ func main() {
 }
 
 func initDeps() {
-
+	mq.InitRabbitMQ()
+	mq.InitLikeRabbitMQ()
+	impl.GetUserService().MakeLikeConsumers()
 }

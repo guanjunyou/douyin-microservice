@@ -1,7 +1,6 @@
 syntax="proto3";
 package services;
 option go_package ="./;pb";
-import "relationService.proto";
 import "google/protobuf/empty.proto";
 import "userService.proto";
 
@@ -36,13 +35,13 @@ message FriendListResponse {
 }
 
 message MessageActionResquest {
-  int64 user_id=1;
+  string token=1;
   int64 to_user_id=2;
   string content=3;
 }
 
 message MessageChatRequest {
-  int64 user_id=1;
+  string token=1;
   int64 to_user_id=2;
 }
 
@@ -60,7 +59,7 @@ message MessageChatResponse {
 
 service RelationService {
   rpc RelationAction(RelationActionRequest) returns(google.protobuf.Empty);
-  rpc FollowList(FollowerListRequest) returns(FollowerListResponse);
+  rpc FollowList(FollowListRequest) returns(FollowListResponse);
   rpc FollowerList(FollowerListRequest) returns(FollowerListResponse);
   rpc FriendList(FriendListRequest) returns(FriendListResponse);
   rpc MessageAction(MessageActionResquest) returns(google.protobuf.Empty);
