@@ -49,6 +49,6 @@ func main() {
 
 func initDeps() {
 	mq.InitRabbitMQ()
-	mq.InitLikeRabbitMQ()
-	impl.GetUserService().MakeLikeConsumers()
+	mq.InitFollowRabbitMQ()
+	impl.GetUserService().MakeFollowConsumers()
 }

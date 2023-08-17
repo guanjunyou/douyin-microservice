@@ -28,12 +28,12 @@ func InitRouter() *gin.Engine {
 	apiRouter.GET("/comment/list/", http.CommentListHandler)
 	//
 	//// extra apis - II
-	//apiRouter.POST("/relation/action/", http.RelationActionHandler)
-	//apiRouter.GET("/relation/follow/list/", http.FollowListHandler)
-	//apiRouter.GET("/relation/follower/list/", http.FollowerListHandler)
-	//apiRouter.GET("/relation/friend/list/", http.FriendListHandler)
-	//apiRouter.GET("/message/chat/", http.MessageChatHandler)
-	//apiRouter.POST("/message/action/", http.MessageActionHandler)
+	apiRouter.POST("/relation/action/", http.RelationActionHandler)
+	apiRouter.GET("/relation/follow/list/", http.FollowListHandler)
+	apiRouter.GET("/relation/follower/list/", http.FollowerListHandler)
+	apiRouter.GET("/relation/friend/list/", http.FriendListHandler)
+	apiRouter.GET("/message/chat/", http.MessageChatHandler)
+	apiRouter.POST("/message/action/", http.MessageActionHandler)
 
 	apiRouter.GET("/user/", http.UserInfoHandler)
 	apiRouter.POST("/publish/action/", http.PublishHandler)

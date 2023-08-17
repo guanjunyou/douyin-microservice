@@ -14,6 +14,12 @@ type LikeMQ struct {
 	exchange       string
 	key            string
 }
+type LikeMQToUser struct {
+	UserId     int64 `json:"user_id"`
+	VideoId    int64 `json:"video_id"`
+	AuthorId   int64 `json:"author_id"`
+	ActionType int   `json:"action_type"`
+}
 
 // 初始化 channel
 // var LikeChannel chan models.LikeMQToVideo
