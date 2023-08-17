@@ -14,7 +14,6 @@ type LikeMQ struct {
 	exchange       string
 	key            string
 }
-
 type LikeMQToUser struct {
 	UserId     int64 `json:"user_id"`
 	VideoId    int64 `json:"video_id"`

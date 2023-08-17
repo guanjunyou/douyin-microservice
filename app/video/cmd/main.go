@@ -2,10 +2,13 @@ package main
 
 import (
 	"douyin-microservice/app/video/controller"
+	"douyin-microservice/app/video/mq"
 	"douyin-microservice/app/video/rpc"
+	"douyin-microservice/app/video/service/impl"
 	"douyin-microservice/config"
 	"douyin-microservice/idl/pb"
 	"douyin-microservice/pkg/utils"
+	"douyin-microservice/pkg/utils/bloomFilter"
 	"fmt"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
@@ -25,7 +28,7 @@ func main() {
 	r := gin.Default()
 	pprof.Register(r)
 	utils.CreateGORMDB()
-	//bloomFilter.InitBloomFilter()
+	bloomFilter.InitBloomFilter()
 
 	// etcd注册件
 	etcdReg := registry.NewRegistry(
@@ -49,4 +52,13 @@ func main() {
 
 func initDeps() {
 	utils.InitFilter()
+	mq.InitRabbitMQ()
+	mq.InitLikeRabbitMQ()
+	//mq.InitCommentRabbitMQ()
+	mq.MakeLikeChannel()
+	impl.MakeLikeGroutine()
+
+	mq.MakeCommentChannel()
+	impl.MakeCommentGoroutine()
+	//controller.GetUserService().MakeFollowConsumers()
 }

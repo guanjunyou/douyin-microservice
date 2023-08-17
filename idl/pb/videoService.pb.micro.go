@@ -41,7 +41,7 @@ type VideoService interface {
 	Publish(ctx context.Context, in *PublishRequest, opts ...client.CallOption) (*emptypb.Empty, error)
 	PublishList(ctx context.Context, in *PublishListRequest, opts ...client.CallOption) (*PublishListResponse, error)
 	LikeVideo(ctx context.Context, in *LikeVideoRequest, opts ...client.CallOption) (*emptypb.Empty, error)
-	QueryVideosOfLike(ctx context.Context, in *QueryVideosOfLikeRequest, opts ...client.CallOption) (*emptypb.Empty, error)
+	QueryVideosOfLike(ctx context.Context, in *QueryVideosOfLikeRequest, opts ...client.CallOption) (*QueryVideosOfLikeResponse, error)
 	PostComments(ctx context.Context, in *PostCommentsRequest, opts ...client.CallOption) (*emptypb.Empty, error)
 	DeleteComments(ctx context.Context, in *DeleteCommentsRequest, opts ...client.CallOption) (*emptypb.Empty, error)
 	CommentList(ctx context.Context, in *CommentListRequest, opts ...client.CallOption) (*CommentListResponse, error)
@@ -99,9 +99,9 @@ func (c *videoService) LikeVideo(ctx context.Context, in *LikeVideoRequest, opts
 	return out, nil
 }
 
-func (c *videoService) QueryVideosOfLike(ctx context.Context, in *QueryVideosOfLikeRequest, opts ...client.CallOption) (*emptypb.Empty, error) {
+func (c *videoService) QueryVideosOfLike(ctx context.Context, in *QueryVideosOfLikeRequest, opts ...client.CallOption) (*QueryVideosOfLikeResponse, error) {
 	req := c.c.NewRequest(c.name, "VideoService.QueryVideosOfLike", in)
-	out := new(emptypb.Empty)
+	out := new(QueryVideosOfLikeResponse)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -146,7 +146,7 @@ type VideoServiceHandler interface {
 	Publish(context.Context, *PublishRequest, *emptypb.Empty) error
 	PublishList(context.Context, *PublishListRequest, *PublishListResponse) error
 	LikeVideo(context.Context, *LikeVideoRequest, *emptypb.Empty) error
-	QueryVideosOfLike(context.Context, *QueryVideosOfLikeRequest, *emptypb.Empty) error
+	QueryVideosOfLike(context.Context, *QueryVideosOfLikeRequest, *QueryVideosOfLikeResponse) error
 	PostComments(context.Context, *PostCommentsRequest, *emptypb.Empty) error
 	DeleteComments(context.Context, *DeleteCommentsRequest, *emptypb.Empty) error
 	CommentList(context.Context, *CommentListRequest, *CommentListResponse) error
@@ -158,7 +158,7 @@ func RegisterVideoServiceHandler(s server.Server, hdlr VideoServiceHandler, opts
 		Publish(ctx context.Context, in *PublishRequest, out *emptypb.Empty) error
 		PublishList(ctx context.Context, in *PublishListRequest, out *PublishListResponse) error
 		LikeVideo(ctx context.Context, in *LikeVideoRequest, out *emptypb.Empty) error
-		QueryVideosOfLike(ctx context.Context, in *QueryVideosOfLikeRequest, out *emptypb.Empty) error
+		QueryVideosOfLike(ctx context.Context, in *QueryVideosOfLikeRequest, out *QueryVideosOfLikeResponse) error
 		PostComments(ctx context.Context, in *PostCommentsRequest, out *emptypb.Empty) error
 		DeleteComments(ctx context.Context, in *DeleteCommentsRequest, out *emptypb.Empty) error
 		CommentList(ctx context.Context, in *CommentListRequest, out *CommentListResponse) error
@@ -190,7 +190,7 @@ func (h *videoServiceHandler) LikeVideo(ctx context.Context, in *LikeVideoReques
 	return h.VideoServiceHandler.LikeVideo(ctx, in, out)
 }
 
-func (h *videoServiceHandler) QueryVideosOfLike(ctx context.Context, in *QueryVideosOfLikeRequest, out *emptypb.Empty) error {
+func (h *videoServiceHandler) QueryVideosOfLike(ctx context.Context, in *QueryVideosOfLikeRequest, out *QueryVideosOfLikeResponse) error {
 	return h.VideoServiceHandler.QueryVideosOfLike(ctx, in, out)
 }
 

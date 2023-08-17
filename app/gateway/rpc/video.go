@@ -28,3 +28,15 @@ func PublishList(ctx context.Context, req *pb.PublishListRequest) (resp *pb.Publ
 	}
 	return resp, nil
 }
+func LikeVideo(ctx context.Context, req *pb.LikeVideoRequest) error {
+	_, err := VideoService.LikeVideo(ctx, req)
+	return err
+}
+
+func QueryVideosOfLike(ctx context.Context, req *pb.QueryVideosOfLikeRequest) (resp *pb.QueryVideosOfLikeResponse, err error) {
+	resp, err = VideoService.QueryVideosOfLike(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}

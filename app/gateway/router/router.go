@@ -22,10 +22,10 @@ func InitRouter() *gin.Engine {
 
 	//apiRouter2 := r.Group("/douyin")
 	// extra apis - I
-	//apiRouter.POST("/favorite/action/", http.FavoriteActionHandler)
-	//apiRouter.GET("/favorite/list/", http.FavoriteListHandler)
-	//apiRouter.POST("/comment/action/", http.CommentActionHandler)
-	//apiRouter.GET("/comment/list/", http.CommentListHandler)
+	apiRouter.POST("/favorite/action/", http.FavoriteActionHandler)
+	apiRouter.GET("/favorite/list/", http.FavoriteListHandler)
+	apiRouter.POST("/comment/action/", http.CommentActionHandler)
+	apiRouter.GET("/comment/list/", http.CommentListHandler)
 	//
 	//// extra apis - II
 	apiRouter.POST("/relation/action/", http.RelationActionHandler)

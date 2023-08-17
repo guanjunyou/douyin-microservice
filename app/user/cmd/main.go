@@ -48,7 +48,10 @@ func main() {
 }
 
 func initDeps() {
+	//bloomFilter.InitBloomFilter()
 	mq.InitRabbitMQ()
 	mq.InitFollowRabbitMQ()
+	mq.InitLikeRabbitMQ()
 	impl.GetUserService().MakeFollowConsumers()
+	impl.GetUserService().MakeLikeConsumers()
 }
