@@ -43,6 +43,7 @@ type RelationService interface {
 	FriendList(ctx context.Context, in *FriendListRequest, opts ...client.CallOption) (*FriendListResponse, error)
 	MessageAction(ctx context.Context, in *MessageActionResquest, opts ...client.CallOption) (*emptypb.Empty, error)
 	MessageChat(ctx context.Context, in *MessageChatRequest, opts ...client.CallOption) (*MessageChatResponse, error)
+	CheckFollowForUser(ctx context.Context, in *CheckFollowRequest, opts ...client.CallOption) (*CheckFollowResponse, error)
 }
 
 type relationService struct {
@@ -117,6 +118,16 @@ func (c *relationService) MessageChat(ctx context.Context, in *MessageChatReques
 	return out, nil
 }
 
+func (c *relationService) CheckFollowForUser(ctx context.Context, in *CheckFollowRequest, opts ...client.CallOption) (*CheckFollowResponse, error) {
+	req := c.c.NewRequest(c.name, "RelationService.CheckFollowForUser", in)
+	out := new(CheckFollowResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for RelationService service
 
 type RelationServiceHandler interface {
@@ -126,6 +137,7 @@ type RelationServiceHandler interface {
 	FriendList(context.Context, *FriendListRequest, *FriendListResponse) error
 	MessageAction(context.Context, *MessageActionResquest, *emptypb.Empty) error
 	MessageChat(context.Context, *MessageChatRequest, *MessageChatResponse) error
+	CheckFollowForUser(context.Context, *CheckFollowRequest, *CheckFollowResponse) error
 }
 
 func RegisterRelationServiceHandler(s server.Server, hdlr RelationServiceHandler, opts ...server.HandlerOption) error {
@@ -136,6 +148,7 @@ func RegisterRelationServiceHandler(s server.Server, hdlr RelationServiceHandler
 		FriendList(ctx context.Context, in *FriendListRequest, out *FriendListResponse) error
 		MessageAction(ctx context.Context, in *MessageActionResquest, out *emptypb.Empty) error
 		MessageChat(ctx context.Context, in *MessageChatRequest, out *MessageChatResponse) error
+		CheckFollowForUser(ctx context.Context, in *CheckFollowRequest, out *CheckFollowResponse) error
 	}
 	type RelationService struct {
 		relationService
@@ -170,4 +183,8 @@ func (h *relationServiceHandler) MessageAction(ctx context.Context, in *MessageA
 
 func (h *relationServiceHandler) MessageChat(ctx context.Context, in *MessageChatRequest, out *MessageChatResponse) error {
 	return h.RelationServiceHandler.MessageChat(ctx, in, out)
+}
+
+func (h *relationServiceHandler) CheckFollowForUser(ctx context.Context, in *CheckFollowRequest, out *CheckFollowResponse) error {
+	return h.RelationServiceHandler.CheckFollowForUser(ctx, in, out)
 }

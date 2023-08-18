@@ -610,6 +610,108 @@ func (x *MessageChatResponse) GetMessageList() []*MessageDVO {
 	return nil
 }
 
+type CheckFollowRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	UserId   int64 `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	ToUserId int64 `protobuf:"varint,2,opt,name=to_user_id,json=toUserId,proto3" json:"to_user_id,omitempty"`
+}
+
+func (x *CheckFollowRequest) Reset() {
+	*x = CheckFollowRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_relationService_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CheckFollowRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckFollowRequest) ProtoMessage() {}
+
+func (x *CheckFollowRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_relationService_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckFollowRequest.ProtoReflect.Descriptor instead.
+func (*CheckFollowRequest) Descriptor() ([]byte, []int) {
+	return file_relationService_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *CheckFollowRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *CheckFollowRequest) GetToUserId() int64 {
+	if x != nil {
+		return x.ToUserId
+	}
+	return 0
+}
+
+type CheckFollowResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	IsFollow bool `protobuf:"varint,1,opt,name=isFollow,proto3" json:"isFollow,omitempty"`
+}
+
+func (x *CheckFollowResponse) Reset() {
+	*x = CheckFollowResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_relationService_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CheckFollowResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckFollowResponse) ProtoMessage() {}
+
+func (x *CheckFollowResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_relationService_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckFollowResponse.ProtoReflect.Descriptor instead.
+func (*CheckFollowResponse) Descriptor() ([]byte, []int) {
+	return file_relationService_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *CheckFollowResponse) GetIsFollow() bool {
+	if x != nil {
+		return x.IsFollow
+	}
+	return false
+}
+
 var File_relationService_proto protoreflect.FileDescriptor
 
 var file_relationService_proto_rawDesc = []byte{
@@ -672,7 +774,15 @@ var file_relationService_proto_rawDesc = []byte{
 	0x73, 0x65, 0x12, 0x37, 0x0a, 0x0c, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x5f, 0x6c, 0x69,
 	0x73, 0x74, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x14, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69,
 	0x63, 0x65, 0x73, 0x2e, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x44, 0x56, 0x4f, 0x52, 0x0b,
-	0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x4c, 0x69, 0x73, 0x74, 0x32, 0xd3, 0x03, 0x0a, 0x0f,
+	0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x4c, 0x69, 0x73, 0x74, 0x22, 0x4b, 0x0a, 0x12, 0x43,
+	0x68, 0x65, 0x63, 0x6b, 0x46, 0x6f, 0x6c, 0x6c, 0x6f, 0x77, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x12, 0x17, 0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x03, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x12, 0x1c, 0x0a, 0x0a, 0x74, 0x6f,
+	0x5f, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x08,
+	0x74, 0x6f, 0x55, 0x73, 0x65, 0x72, 0x49, 0x64, 0x22, 0x31, 0x0a, 0x13, 0x43, 0x68, 0x65, 0x63,
+	0x6b, 0x46, 0x6f, 0x6c, 0x6c, 0x6f, 0x77, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x1a, 0x0a, 0x08, 0x69, 0x73, 0x46, 0x6f, 0x6c, 0x6c, 0x6f, 0x77, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x08, 0x52, 0x08, 0x69, 0x73, 0x46, 0x6f, 0x6c, 0x6c, 0x6f, 0x77, 0x32, 0xa6, 0x04, 0x0a, 0x0f,
 	0x52, 0x65, 0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12,
 	0x49, 0x0a, 0x0e, 0x52, 0x65, 0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x41, 0x63, 0x74, 0x69, 0x6f,
 	0x6e, 0x12, 0x1f, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x73, 0x2e, 0x52, 0x65, 0x6c,
@@ -702,8 +812,13 @@ var file_relationService_proto_rawDesc = []byte{
 	0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x43, 0x68, 0x61, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65,
 	0x73, 0x74, 0x1a, 0x1d, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x73, 0x2e, 0x4d, 0x65,
 	0x73, 0x73, 0x61, 0x67, 0x65, 0x43, 0x68, 0x61, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x42, 0x07, 0x5a, 0x05, 0x2e, 0x2f, 0x3b, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x65, 0x12, 0x51, 0x0a, 0x12, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x46, 0x6f, 0x6c, 0x6c, 0x6f, 0x77,
+	0x46, 0x6f, 0x72, 0x55, 0x73, 0x65, 0x72, 0x12, 0x1c, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63,
+	0x65, 0x73, 0x2e, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x46, 0x6f, 0x6c, 0x6c, 0x6f, 0x77, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1d, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x73,
+	0x2e, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x46, 0x6f, 0x6c, 0x6c, 0x6f, 0x77, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x42, 0x07, 0x5a, 0x05, 0x2e, 0x2f, 0x3b, 0x70, 0x62, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -718,7 +833,7 @@ func file_relationService_proto_rawDescGZIP() []byte {
 	return file_relationService_proto_rawDescData
 }
 
-var file_relationService_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_relationService_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_relationService_proto_goTypes = []interface{}{
 	(*RelationActionRequest)(nil), // 0: services.RelationActionRequest
 	(*FollowListRequest)(nil),     // 1: services.FollowListRequest
@@ -731,13 +846,15 @@ var file_relationService_proto_goTypes = []interface{}{
 	(*MessageChatRequest)(nil),    // 8: services.MessageChatRequest
 	(*MessageDVO)(nil),            // 9: services.MessageDVO
 	(*MessageChatResponse)(nil),   // 10: services.MessageChatResponse
-	(*User)(nil),                  // 11: services.User
-	(*emptypb.Empty)(nil),         // 12: google.protobuf.Empty
+	(*CheckFollowRequest)(nil),    // 11: services.CheckFollowRequest
+	(*CheckFollowResponse)(nil),   // 12: services.CheckFollowResponse
+	(*User)(nil),                  // 13: services.User
+	(*emptypb.Empty)(nil),         // 14: google.protobuf.Empty
 }
 var file_relationService_proto_depIdxs = []int32{
-	11, // 0: services.FollowListResponse.follow_user:type_name -> services.User
-	11, // 1: services.FollowerListResponse.follower_user:type_name -> services.User
-	11, // 2: services.FriendListResponse.friend_user:type_name -> services.User
+	13, // 0: services.FollowListResponse.follow_user:type_name -> services.User
+	13, // 1: services.FollowerListResponse.follower_user:type_name -> services.User
+	13, // 2: services.FriendListResponse.friend_user:type_name -> services.User
 	9,  // 3: services.MessageChatResponse.message_list:type_name -> services.MessageDVO
 	0,  // 4: services.RelationService.RelationAction:input_type -> services.RelationActionRequest
 	1,  // 5: services.RelationService.FollowList:input_type -> services.FollowListRequest
@@ -745,14 +862,16 @@ var file_relationService_proto_depIdxs = []int32{
 	5,  // 7: services.RelationService.FriendList:input_type -> services.FriendListRequest
 	7,  // 8: services.RelationService.MessageAction:input_type -> services.MessageActionResquest
 	8,  // 9: services.RelationService.MessageChat:input_type -> services.MessageChatRequest
-	12, // 10: services.RelationService.RelationAction:output_type -> google.protobuf.Empty
-	2,  // 11: services.RelationService.FollowList:output_type -> services.FollowListResponse
-	4,  // 12: services.RelationService.FollowerList:output_type -> services.FollowerListResponse
-	6,  // 13: services.RelationService.FriendList:output_type -> services.FriendListResponse
-	12, // 14: services.RelationService.MessageAction:output_type -> google.protobuf.Empty
-	10, // 15: services.RelationService.MessageChat:output_type -> services.MessageChatResponse
-	10, // [10:16] is the sub-list for method output_type
-	4,  // [4:10] is the sub-list for method input_type
+	11, // 10: services.RelationService.CheckFollowForUser:input_type -> services.CheckFollowRequest
+	14, // 11: services.RelationService.RelationAction:output_type -> google.protobuf.Empty
+	2,  // 12: services.RelationService.FollowList:output_type -> services.FollowListResponse
+	4,  // 13: services.RelationService.FollowerList:output_type -> services.FollowerListResponse
+	6,  // 14: services.RelationService.FriendList:output_type -> services.FriendListResponse
+	14, // 15: services.RelationService.MessageAction:output_type -> google.protobuf.Empty
+	10, // 16: services.RelationService.MessageChat:output_type -> services.MessageChatResponse
+	12, // 17: services.RelationService.CheckFollowForUser:output_type -> services.CheckFollowResponse
+	11, // [11:18] is the sub-list for method output_type
+	4,  // [4:11] is the sub-list for method input_type
 	4,  // [4:4] is the sub-list for extension type_name
 	4,  // [4:4] is the sub-list for extension extendee
 	0,  // [0:4] is the sub-list for field type_name
@@ -897,6 +1016,30 @@ func file_relationService_proto_init() {
 				return nil
 			}
 		}
+		file_relationService_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CheckFollowRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_relationService_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CheckFollowResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -904,7 +1047,7 @@ func file_relationService_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_relationService_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   11,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

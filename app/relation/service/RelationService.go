@@ -14,4 +14,7 @@ type RelationService interface {
 
 	// GetFriends 查询好友列表
 	GetFriends(usrId int64) ([]models.User, error)
+
+	//查询是否关注
+	CheckFollowForUser(userId int64, toUserId int64) bool
 }

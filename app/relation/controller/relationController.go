@@ -93,6 +93,12 @@ func (r RelationController) MessageChat(ctx context.Context, request *pb.Message
 	return nil
 }
 
+func (r RelationController) CheckFollowForUser(ctx context.Context, request *pb.CheckFollowRequest, response *pb.CheckFollowResponse) error {
+	isFollow := GetRelationService().CheckFollowForUser(request.UserId, request.ToUserId)
+	response.IsFollow = isFollow
+	return nil
+}
+
 var relationController *RelationController
 var relationControllerOnce sync.Once
 

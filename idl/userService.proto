@@ -22,6 +22,7 @@ message UserRequest{
   int64 user_id=1;
   string username =2;
   string password=3;
+  string token=4;
 }
 //用户登录、注册响应
 message UserResponse{

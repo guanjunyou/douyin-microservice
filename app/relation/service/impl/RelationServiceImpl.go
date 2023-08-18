@@ -309,6 +309,14 @@ func (relationServiceImpl RelationServiceImpl) GetFollowers(userId int64) ([]mod
 	return users, nil
 }
 
+func (relationServiceImpl RelationServiceImpl) CheckFollowForUser(userId int64, toUserId int64) bool {
+	follow, err := getFollowByUserIdAndToUserId(userId, toUserId)
+	if follow.Id != -1 && err == nil {
+		return true
+	}
+	return false
+}
+
 // GetFriends 查询好友列表
 func (relationServiceImpl RelationServiceImpl) GetFriends(userId int64) ([]models.User, error) {
 	follows, err := relationServiceImpl.GetFollows(userId)
@@ -339,7 +347,47 @@ func containsID(arr []models.User, id int64) bool {
 }
 
 func getFollowByUserIdAndToUserId(userId int64, toUserId int64) (*models.Follow, error) {
-	res := &models.Follow{}
-	err := utils.GetMysqlDB().Model(models.Follow{}).Where("user_id = ? AND follow_user_id = ? AND is_deleted = ?", userId, toUserId, 0).Find(res).Error
-	return res, err
+	var res models.Follow
+	res.Id = -1
+	err := utils.GetMysqlDB().Table("follow").Where("user_id = ? AND follow_user_id = ? AND is_deleted = ?", userId, toUserId, 0).Find(&res).Error
+	return &res, err
+}
+
+func fromMysqlToRedis(typeStr string, userId int64) (err error) {
+
+	var wh string
+	var s string
+
+	if typeStr == "follow" {
+		wh = "user_id = ? and is_deleted = ?"
+		s = "follow_user_id"
+	} else {
+		wh = "follow_user_id = ? and is_deleted = ?"
+		s = "user_id"
+	}
+
+	userIds := make([]int64, 0)
+	if err = utils.GetMysqlDB().Table("follow").Select(s).Where(wh, userId, 0).Find(&userIds).Error; err != nil {
+		return
+	}
+
+	key := fmt.Sprintf("%s:%d", typeStr, userId)
+	if len(userIds) > 0 {
+		redisDB := utils.GetRedisDB()
+		redisDB.SAdd(context.Background(), key, userIds)
+	}
+
+	return
+}
+
+// 判断redis中是否存在key，并且不存在时，调用回调函数
+func jugeExist(userId int64, typeStr string, callback func(t string, u int64) error) (err error) {
+	followerExists := utils.GetRedisDB().Exists(context.Background(), fmt.Sprintf("%s:%d", typeStr, userId)).Val()
+
+	if followerExists == 0 {
+		// 不存在
+		err = callback(typeStr, userId)
+		return
+	}
+	return
 }

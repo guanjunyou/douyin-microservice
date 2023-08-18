@@ -55,7 +55,7 @@ func (u UserController) UserRegister(ctx context.Context, request *pb.UserReques
 }
 
 func (u UserController) UserInfo(ctx context.Context, request *pb.UserRequest, response *pb.UserDetailResponse) error {
-	user, err := userService.UserInfo(request.UserId)
+	user, err := userService.UserInfo(request.UserId, request.Token)
 	if err != nil {
 		return err
 	}

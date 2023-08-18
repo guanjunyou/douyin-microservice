@@ -57,6 +57,15 @@ message MessageChatResponse {
   repeated MessageDVO message_list=1;
 }
 
+message CheckFollowRequest {
+  int64 user_id=1;
+  int64 to_user_id=2;
+}
+
+message CheckFollowResponse {
+  bool isFollow=1;
+}
+
 service RelationService {
   rpc RelationAction(RelationActionRequest) returns(google.protobuf.Empty);
   rpc FollowList(FollowListRequest) returns(FollowListResponse);
@@ -64,6 +73,7 @@ service RelationService {
   rpc FriendList(FriendListRequest) returns(FriendListResponse);
   rpc MessageAction(MessageActionResquest) returns(google.protobuf.Empty);
   rpc MessageChat(MessageChatRequest) returns(MessageChatResponse);
+  rpc CheckFollowForUser(CheckFollowRequest) returns(CheckFollowResponse);
 }
 
 
