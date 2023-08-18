@@ -7,6 +7,7 @@ import (
 	"douyin-microservice/config"
 	"douyin-microservice/idl/pb"
 	"douyin-microservice/pkg/utils"
+	"douyin-microservice/pkg/utils/bloomFilter"
 	"fmt"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
@@ -43,12 +44,13 @@ func main() {
 	microService.Init()
 	// 服务注册
 	_ = pb.RegisterUserServiceHandler(microService.Server(), controller.GetController())
+	//布隆过滤器
+	bloomFilter.InitBloomFilter()
 	// 启动微服务
 	_ = microService.Run()
 }
 
 func initDeps() {
-	//bloomFilter.InitBloomFilter()
 	mq.InitRabbitMQ()
 	mq.InitFollowRabbitMQ()
 	mq.InitLikeRabbitMQ()
