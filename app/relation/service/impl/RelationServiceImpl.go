@@ -311,7 +311,7 @@ func (relationServiceImpl RelationServiceImpl) GetFollowers(userId int64) ([]mod
 
 func (relationServiceImpl RelationServiceImpl) CheckFollowForUser(userId int64, toUserId int64) bool {
 	follow, err := getFollowByUserIdAndToUserId(userId, toUserId)
-	if follow.Id != -1 && err == nil {
+	if follow.Id != 0 && err == nil {
 		return true
 	}
 	return false
@@ -348,8 +348,7 @@ func containsID(arr []models.User, id int64) bool {
 
 func getFollowByUserIdAndToUserId(userId int64, toUserId int64) (*models.Follow, error) {
 	var res models.Follow
-	res.Id = -1
-	err := utils.GetMysqlDB().Table("follow").Where("user_id = ? AND follow_user_id = ? AND is_deleted = ?", userId, toUserId, 0).Find(&res).Error
+	err := utils.GetMysqlDB().Model(models.Follow{}).Where("user_id = ? AND follow_user_id = ? AND is_deleted = ?", userId, toUserId, 0).Debug().Find(&res).Error
 	return &res, err
 }
 
