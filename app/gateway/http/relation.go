@@ -33,7 +33,7 @@ func RelationActionHandler(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusOK, utils.Response{
 			StatusCode: 1,
-			StatusMsg:  err.Error(),
+			StatusMsg:  GetErrorMsg(err),
 		})
 		return
 	}
@@ -137,4 +137,21 @@ func responseMessageList(c *gin.Context, messageList []*pb.MessageDVO) {
 type MessageListResponse struct {
 	utils.Response
 	Data []*pb.MessageDVO `json:"message_list,omitempty"`
+}
+
+func GetErrorMsg(err error) string {
+	var msg string
+	switch err.Error() {
+	case "fallback failed with '已关注'. run error was '已关注'":
+		msg = "已关注"
+	case "fallback failed with '你不能关注(或者取消关注)自己'. run error was '你不能关注(或者取消关注)自己'":
+		msg = "你不能关注(或者取消关注)自己"
+	case "fallback failed with '已取消关注'. run error was '已取消关注'":
+		msg = "已取消关注"
+	case "fallback failed with '未找到要取消的关注记录'. run error was '未找到要取消的关注记录'":
+		msg = "未找到要取消的关注记录"
+	default:
+		msg = err.Error()
+	}
+	return msg
 }

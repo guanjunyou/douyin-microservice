@@ -3,6 +3,7 @@ package main
 import (
 	"douyin-microservice/app/user/controller"
 	"douyin-microservice/app/user/mq"
+	"douyin-microservice/app/user/rpc"
 	"douyin-microservice/app/user/service/impl"
 	"douyin-microservice/config"
 	"douyin-microservice/idl/pb"
@@ -46,6 +47,7 @@ func main() {
 	_ = pb.RegisterUserServiceHandler(microService.Server(), controller.GetController())
 	//布隆过滤器
 	bloomFilter.InitBloomFilter()
+	rpc.NewRpcRelationServiceClient()
 	// 启动微服务
 	_ = microService.Run()
 }

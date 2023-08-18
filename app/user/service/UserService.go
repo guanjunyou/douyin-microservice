@@ -15,5 +15,5 @@ type UserService interface {
 
 	Login(username string, password string) (int64, string, error)
 
-	UserInfo(userId int64) (*model.User, error)
+	UserInfo(userId int64, token string) (*model.User, error)
 }

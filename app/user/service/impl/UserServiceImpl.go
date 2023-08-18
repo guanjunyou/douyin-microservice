@@ -1,9 +1,12 @@
 package impl
 
 import (
+	"context"
 	"douyin-microservice/app/user/model"
 	"douyin-microservice/app/user/mq"
+	"douyin-microservice/app/user/rpc"
 	"douyin-microservice/config"
+	"douyin-microservice/idl/pb"
 	"douyin-microservice/pkg/utils"
 	"encoding/json"
 	"errors"
@@ -268,12 +271,24 @@ func (userService UserServiceImpl) MakeLikeConsumers() {
 	}
 }
 
-func (userService UserServiceImpl) UserInfo(userId int64) (*model.User, error) {
+func (userService UserServiceImpl) UserInfo(userId int64, token string) (*model.User, error) {
 	//userClaims, err := utils.AnalyseToken(token)
 	//if err != nil || userClaims == nil {
 	//	return nil, errors.New("用户未登录")
 	//}
 	user, err1 := userService.GetUserById(userId)
+	if token != "" {
+		userClaim, err := utils.AnalyseToken(token)
+		if err != nil {
+			return &user, nil
+		}
+		var req pb.CheckFollowRequest
+		req.UserId = userClaim.CommonEntity.Id
+		req.ToUserId = userId
+		resp, _ := rpc.RelationClient.CheckFollowForUser(context.Background(), &req)
+		user.IsFollow = resp.IsFollow
+	}
+
 	if err1 != nil {
 		return nil, errors.New("用户不存在！")
 	}

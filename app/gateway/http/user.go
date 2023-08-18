@@ -68,11 +68,12 @@ func LoginHandler(c *gin.Context) {
 }
 
 func UserInfoHandler(c *gin.Context) {
-	//token := c.Query("token")
+	token := c.Query("token")
 	userId := c.Query("user_id")
 	userIdInt, _ := strconv.ParseInt(userId, 10, 64)
 	var req pb.UserRequest
 	req.UserId = userIdInt
+	req.Token = token
 	resp, err := rpc.UserInfo(c, &req)
 	if err != nil {
 		log.Printf(err.Error())
