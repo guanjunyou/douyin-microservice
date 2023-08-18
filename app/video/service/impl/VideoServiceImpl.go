@@ -53,8 +53,9 @@ func (videoService VideoServiceImpl) GetVideoListByLastTime(latestTime time.Time
 				return
 			}
 			videoDVO.Author = BuildUser(userResp.User)
+
 			if userId != -1 {
-				videoDVO.IsFavorite = videoService.FavoriteService.FindIsFavouriteByUserIdAndVideoId(userId, videoDVO.Id)
+				videoDVO.IsFavorite = favoriteService.FindIsFavouriteByUserIdAndVideoId(userId, videoDVO.Id)
 			} else {
 				videoDVO.IsFavorite = false
 			}
