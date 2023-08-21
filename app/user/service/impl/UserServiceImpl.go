@@ -64,7 +64,7 @@ func (userService UserServiceImpl) Register(username string, password string) (i
 		//c.JSON(http.StatusBadRequest, UserLoginResponse{
 		//	Response: models.Response{StatusCode: 1, StatusMsg: "用户名重复"},
 		//})
-		return -1, "", errName
+		return -1, "", errors.New("用户名重复")
 	}
 	//var userRequest UserRequest
 	//if err := c.ShouldBindJSON(&userRequest); err != nil {
@@ -122,14 +122,14 @@ func (userService UserServiceImpl) Login(username string, password string) (int6
 		//c.JSON(http.StatusBadRequest, UserLoginResponse{
 		//	Response: models.Response{StatusCode: 1, StatusMsg: "用户不存在，请注册!"},
 		//})
-		return -1, "", nil
+		return -1, "", errors.New("用户不存在，请注册")
 	}
 	pwdErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if pwdErr != nil {
 		//c.JSON(http.StatusOK, UserLoginResponse{
 		//	Response: models.Response{StatusCode: 1, StatusMsg: "密码错误！"},
 		//})
-		return -1, "", pwdErr
+		return -1, "", errors.New("密码错误！")
 	}
 
 	token, err2 := utils.GenerateToken(username, user.CommonEntity)
