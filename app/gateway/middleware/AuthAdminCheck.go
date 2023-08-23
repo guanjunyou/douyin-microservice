@@ -13,6 +13,7 @@ var notAuthArr = map[string]string{
 	"/douyin/feed/":          "1",
 	"/douyin/user/register/": "1",
 	"/douyin/user/login/":    "1",
+	"/douyin/user/":          "1",
 }
 
 /*
