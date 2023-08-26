@@ -15,6 +15,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"go-micro.dev/v4"
 	"go-micro.dev/v4/registry"
+	"log"
+	"net/http"
 )
 
 var SF *utils.Snowflake
@@ -49,6 +51,9 @@ func main() {
 	bloomFilter.InitBloomFilter()
 	rpc.NewRpcRelationServiceClient()
 	// 启动微服务
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6062", nil))
+	}()
 	_ = microService.Run()
 }
 

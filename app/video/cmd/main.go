@@ -15,6 +15,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"go-micro.dev/v4"
 	"go-micro.dev/v4/registry"
+	"log"
+	"net/http"
 )
 
 var SF *utils.Snowflake
@@ -47,6 +49,9 @@ func main() {
 	_ = pb.RegisterVideoServiceHandler(microService.Server(), controller.GetVideoController())
 	// 启动微服务
 	rpc.NewRpcUserServiceClient()
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6063", nil))
+	}()
 	_ = microService.Run()
 }
 

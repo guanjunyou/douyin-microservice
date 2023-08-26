@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+
 	//"github.com/micro/go-micro/registry"
 	//"github.com/micro/go-micro/web"
 	"time"
@@ -34,5 +37,8 @@ func main() {
 	)
 	// 接收命令行参数
 	_ = server.Init()
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 	_ = server.Run()
 }
