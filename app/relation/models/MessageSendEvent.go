@@ -1,6 +1,9 @@
 package models
 
-import "douyin-microservice/pkg/utils"
+import (
+	"douyin-microservice/pkg/utils"
+	"time"
+)
 
 type MessageSendEvent struct {
 	utils.CommonEntity
@@ -31,9 +34,9 @@ func SaveMessageSendEvent(messageSendEvent *MessageSendEvent) error {
 	return utils.GetMysqlDB().Create(messageSendEvent).Error
 }
 
-func FindMessageSendEventByUserIdAndToUserId(userId int64, toUserId int64) ([]MessageSendEvent, error) {
+func FindMessageSendEventByUserIdAndToUserId(userId int64, toUserId int64, preTime time.Time) ([]MessageSendEvent, error) {
 	var messageSendEvents []MessageSendEvent
-	err := utils.GetMysqlDB().Where("user_id = ? AND to_user_id = ?", userId, toUserId).Find(&messageSendEvents).Error
+	err := utils.GetMysqlDB().Where("user_id = ? AND to_user_id = ? AND create_date > ? ", userId, toUserId, preTime).Find(&messageSendEvents).Error
 	if err != nil {
 		return nil, err
 	}

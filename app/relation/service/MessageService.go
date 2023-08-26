@@ -8,5 +8,5 @@ type MessageService interface {
 	SendMessage(token string, toUserId int64, content string) error
 
 	// GetHistoryOfChat 查看消息记录
-	GetHistoryOfChat(token string, toUserId int64) ([]models.MessageDVO, error)
+	GetHistoryOfChat(token string, toUserId int64, preMsgTime string) ([]models.MessageDVO, error)
 }

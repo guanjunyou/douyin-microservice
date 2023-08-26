@@ -80,8 +80,8 @@ func (r RelationController) MessageAction(ctx context.Context, resquest *pb.Mess
 func (r RelationController) MessageChat(ctx context.Context, request *pb.MessageChatRequest, response *pb.MessageChatResponse) error {
 	token := request.GetToken()
 	toUserId := request.GetToUserId()
-
-	chatList, err := GetMessageService().GetHistoryOfChat(token, toUserId)
+	preMsgTime := request.GetPreMsgTime()
+	chatList, err := GetMessageService().GetHistoryOfChat(token, toUserId, preMsgTime)
 	if err != nil {
 		return err
 	}
