@@ -97,10 +97,12 @@ func FriendListHandler(c *gin.Context) {
 func MessageActionHandler(c *gin.Context) {
 	token := c.Query("token")
 	toUserId := c.Query("to_user_id")
+	content := c.Query("content")
 	toUserIdInt64, _ := strconv.ParseInt(toUserId, 10, 64)
 	var messageActionReq pb.MessageActionResquest
 	messageActionReq.Token = token
 	messageActionReq.ToUserId = toUserIdInt64
+	messageActionReq.Content = content
 	err := rpc.MessageAction(c, &messageActionReq)
 	if err != nil {
 		c.JSON(http.StatusOK, utils.Response{StatusCode: 1, StatusMsg: err.Error()})
@@ -117,7 +119,7 @@ func MessageChatHandler(c *gin.Context) {
 	messageChatReq.ToUserId = toUserIdInt64
 	resp, err := rpc.MessageChat(c, &messageChatReq)
 	if err != nil {
-		c.JSON(http.StatusOK, utils.Response{StatusCode: 1, StatusMsg: err.Error()})
+		c.JSON(http.StatusOK, utils.MsgResponse{StatusCode: "1", StatusMsg: err.Error()})
 	}
 	responseMessageList(c, resp.MessageList)
 }
@@ -131,11 +133,11 @@ func errRespond(c *gin.Context, err error, statusCode int32, statusMsg string) b
 }
 
 func responseMessageList(c *gin.Context, messageList []*pb.MessageDVO) {
-	c.JSON(http.StatusOK, MessageListResponse{Response: utils.Response{StatusCode: 0, StatusMsg: "Message list success"}, Data: messageList})
+	c.JSON(http.StatusOK, MessageListResponse{MsgResponse: utils.MsgResponse{StatusCode: "0", StatusMsg: "Message list success"}, Data: messageList})
 }
 
 type MessageListResponse struct {
-	utils.Response
+	utils.MsgResponse
 	Data []*pb.MessageDVO `json:"message_list,omitempty"`
 }
 

@@ -78,7 +78,7 @@ func (messageService MessageServiceImpl) GetHistoryOfChat(token string, toUserId
 		return nil, err
 	}
 	messageSendEvents = append(messageSendEvents, messageSendEventsOpposite...)
-	sort.Sort(models.ByCreateTime(messageSendEvents))
+	//sort.Sort(models.ByCreateTime(messageSendEvents))
 
 	var messages []models.MessageDVO
 	var wg sync.WaitGroup
@@ -96,6 +96,10 @@ func (messageService MessageServiceImpl) GetHistoryOfChat(token string, toUserId
 		}(messageSendEvent)
 	}
 	wg.Wait()
+
+	sort.Slice(messages, func(i, j int) bool {
+		return messages[i].CreateTime < messages[j].CreateTime
+	})
 	return messages, nil
 }
 

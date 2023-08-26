@@ -113,6 +113,10 @@ func (commentService CommentServiceImpl) CommentList(videoId int64) []models.Com
 	return comments
 }
 
+func channelPut(msg models.CommentMQToVideo) {
+	mq.CommentChannel <- msg
+}
+
 func (commentService CommentServiceImpl) DeleteComments(commentId int64) error {
 	rdb := utils.GetRedisDB()
 
@@ -139,7 +143,7 @@ func (commentService CommentServiceImpl) DeleteComments(commentId int64) error {
 		Content:    "",
 		CommentID:  commentId,
 	}
-	mq.CommentChannel <- toMQ
+	go channelPut(toMQ)
 	return nil
 }
 
