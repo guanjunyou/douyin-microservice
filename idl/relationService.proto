@@ -43,6 +43,7 @@ message MessageActionResquest {
 message MessageChatRequest {
   string token=1;
   int64 to_user_id=2;
+  string pre_msg_time=3;
 }
 
 message MessageDVO {

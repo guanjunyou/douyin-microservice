@@ -9,7 +9,9 @@ import (
 	"io"
 	"net"
 	"sort"
+	"strconv"
 	"sync"
+	"time"
 )
 
 var chatConnMap = sync.Map{}
@@ -56,7 +58,7 @@ func (messageService MessageServiceImpl) SendMessage(token string, toUserId int6
 	return nil
 }
 
-func (messageService MessageServiceImpl) GetHistoryOfChat(token string, toUserId int64) ([]models.MessageDVO, error) {
+func (messageService MessageServiceImpl) GetHistoryOfChat(token string, toUserId int64, preMsgTime string) ([]models.MessageDVO, error) {
 	userClaim, err := utils.AnalyseToken(token)
 	if err != nil {
 		return []models.MessageDVO{}, err
@@ -68,12 +70,26 @@ func (messageService MessageServiceImpl) GetHistoryOfChat(token string, toUserId
 	}
 	userId := user.Id
 
+	var preTime time.Time
+	if preMsgTime != "0" {
+		me, _ := strconv.ParseInt(preMsgTime, 10, 64)
+		preTime = time.Unix(me, 0)
+		if preTime.Year() > 9999 {
+			preTime = time.Unix(me/1000, 0)
+		}
+	} else {
+		preTime = time.Unix(0, 0)
+	}
+
 	//find from meesageSendEvent table
-	messageSendEvents, err := models.FindMessageSendEventByUserIdAndToUserId(userId, toUserId)
+	var messageSendEvents []models.MessageSendEvent
+	if preMsgTime == "0" {
+		messageSendEvents, err = models.FindMessageSendEventByUserIdAndToUserId(userId, toUserId, preTime)
+	}
 	if err != nil {
 		return nil, err
 	}
-	messageSendEventsOpposite, err := models.FindMessageSendEventByUserIdAndToUserId(toUserId, userId)
+	messageSendEventsOpposite, err := models.FindMessageSendEventByUserIdAndToUserId(toUserId, userId, preTime)
 	if err != nil {
 		return nil, err
 	}

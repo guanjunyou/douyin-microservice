@@ -113,10 +113,12 @@ func MessageActionHandler(c *gin.Context) {
 func MessageChatHandler(c *gin.Context) {
 	token := c.Query("token")
 	toUserId := c.Query("to_user_id")
+	preMsgTime := c.Query("pre_msg_time")
 	toUserIdInt64, _ := strconv.ParseInt(toUserId, 10, 64)
 	var messageChatReq pb.MessageChatRequest
 	messageChatReq.Token = token
 	messageChatReq.ToUserId = toUserIdInt64
+	messageChatReq.PreMsgTime = preMsgTime
 	resp, err := rpc.MessageChat(c, &messageChatReq)
 	if err != nil {
 		c.JSON(http.StatusOK, utils.MsgResponse{StatusCode: "1", StatusMsg: err.Error()})
