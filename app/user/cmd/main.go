@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"go-micro.dev/v4"
 	"go-micro.dev/v4/registry"
@@ -51,6 +53,17 @@ func main() {
 	bloomFilter.InitBloomFilter()
 	rpc.NewRpcRelationServiceClient()
 	// 启动微服务
+
+	// 创建 Prometheus 指标
+	//var httpRequests = prometheus.NewCounterVec(
+	//	prometheus.CounterOpts{
+	//		Name: "http_requests_total",
+	//		Help: "Number of HTTP requests received.",
+	//	},
+	//	[]string{"method", "endpoint"},
+	//)
+	PrometheusBoot()
+
 	go func() {
 		log.Println(http.ListenAndServe("localhost:6062", nil))
 	}()
@@ -63,4 +76,20 @@ func initDeps() {
 	mq.InitLikeRabbitMQ()
 	impl.GetUserService().MakeFollowConsumers()
 	impl.GetUserService().MakeLikeConsumers()
+}
+
+func PrometheusBoot() {
+	// 创建 HTTP 处理器
+	h := promhttp.HandlerFor(
+		prometheus.DefaultGatherer,
+		promhttp.HandlerOpts{},
+	)
+	http.Handle("/metrics", h)
+	// 启动web服务，监听8085端口
+	go func() {
+		err := http.ListenAndServe("0.0.0.0:8085", nil)
+		if err != nil {
+			log.Fatal("ListenAndServe: ", err)
+		}
+	}()
 }

@@ -12,7 +12,7 @@
 
 | **团队成员** | **主要贡献**                                                 |
 | ------------ | ------------------------------------------------------------ |
-| 关竣佑       | 负责项目的设计，基础架构组件的搭建，视频 Feed 流接口，文件上传储存服务，点赞优化操作等功能的编写, 项目向微服务演进， 项目性能测试工作 |
+| 关竣佑       | 负责项目的设计，基础架构组件的搭建，视频 Feed 流接口，文件上传储存服务，点赞优化操作等功能的编写, 项目向微服务演进， 项目性能测试工作，项目后期bug修复工作 |
 | 邱祥凯       | 负责评论操作，评论列表，发送消息，聊天记录接口编写，以及评论功能的优化 |
 | 王奕丹       | 负责赞操作，喜欢列表接口编写，以及点赞，评论的查询优化       |
 | 杨伟宁       | 负责基础架构组件的搭建，关注操作，关注列表，粉丝列表，好友列表接口编写，以及关注操作的优化 |
@@ -51,6 +51,7 @@ err := utils.DB.Where("is_deleted != ?", 1).Find(&videolist).Error
 6. 如需提交更改后的数据库禁止删掉之前的数据库文件，以 日期-版本号.sql命名 (如：2023-7-21-v1douyin.sql)
 7. 分支合并之后必须删除GitHub上的分支，每个人在GitHub上最多拥有一个分支
 8. 编写接口时返回的数据一定要按照接口文档要求返回的数据
+9. 数据库禁止使用外键
 
 #### **建议**
 
@@ -80,6 +81,8 @@ err := utils.DB.Where("is_deleted != ?", 1).Find(&videolist).Error
 
 数据库:MySQL
 
+系统监控: Prometheus , grafana
+
 ##### 技术评估
 
 ###### 后端框架
@@ -97,14 +100,12 @@ err := utils.DB.Where("is_deleted != ?", 1).Find(&videolist).Error
 
 - MySQL: 成熟的关系型数据库，具有广泛的支持和优化工具，适合处理关系型数据。
 
-###### 鉴权和加密
+###### 鉴权
 
 - 登录：登录时使用 jwt 将 username 和 CommonEntity 作为负载生成 token, 然后将 token 存入 redis 中  。 
 - 鉴权：操作个人敏感数据或者涉及指定个人的接口时，需要针对用户身份和登录与否进行验证。首先将接收到的 token 进行正确性验证，同时解析出username 等消息，然后从 redis 中查找判断 token 是否过期。
 
 ​    (在必须登录的接口，这些操作在网关层的中间件执行，在不登录即可访问的接口若需要获取私人信息则需自行解析 token 鉴权)
-
-- 加密：密码的加密存储使用 bcrypt 算法，由于 bcrypt 算法加入了盐值，盐是一个随机生成的字符串，它与密码一起被哈希。由于盐是随机生成的，因此即使两个用户使用相同的密码，它们的哈希值也不同。这使得攻击者更难以破解密码。校验时，从hash中取出salt，salt跟password进行hash；得到的结果跟保存在DB中的hash进行比对
 
 ##### 技术使用
 
@@ -113,6 +114,8 @@ err := utils.DB.Where("is_deleted != ?", 1).Find(&videolist).Error
 目前的 rabbitmq消息队列采取发布订阅模式(Pub/Sub )，可以将消息发送给不同服务的消费者，方便后期模块的扩展
 
 ### 3.2 架构设计
+
+本项目目前使用 3台服务器进行部署：分别为微服务主体项目所在服务器，文件服务器，etcd注册中心和rabbitmq 所在服务器。后续若进行微服务分别部署则至少考虑需要5台服务器。
 
 #### 3.2.1 总体架构设计
 
@@ -190,9 +193,17 @@ err := utils.DB.Where("is_deleted != ?", 1).Find(&videolist).Error
 
 ##### 数据库设计
 
-数据库 ER 图如下：
+所有数据库的表的结构如下：
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=YmIwZWVkZTg0MGFhM2RjYzc5MWUzZDUyODYwYTUyNzNfU1kzRU5iRDhqb213S0NQQzJ0UzBZcGk3TXAxTzBLb0tfVG9rZW46TkVsUWJuZzZlb1o5dVl4Rmk1MGNDdFVabjkzXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=ODA4NWQ2ZmYzYzRmM2VlOWQzZTViNjVjOTg3MjZjZGVfNlNDQmM3cjI3eEw4TDJQMThtdWpleTgyQ0ZBTlBiY01fVG9rZW46TkVsUWJuZzZlb1o5dVl4Rmk1MGNDdFVabjkzXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
+
+三个服务由于数据库层面已经去除耦合，考虑实行 **垂直分库** 
+
+三个服务使用不同的数据库，提升性能和可靠性。分库成**三个数据库** ：**user (user表),**  **video (video 表，like表，comment表) ， relation（message_send_event表，follow 表）**
+
+三个服务分别连接三个数据库
+
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=YTVhNmNkZDA1MDkwN2IxM2M4OWQzZTNjZDI1NWY0ZDdfcVcwYW4yWmlRUVNFR052ZUxJUHFKU0JHWkxBcWdyWXVfVG9rZW46T29CRGJub2Rsb2d2SEZ4dnhxUGNYaUl3bmhnXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 ##### 维护数据库和缓存的一致性
 
@@ -262,7 +273,7 @@ err := utils.DB.Where("is_deleted != ?", 1).Find(&videolist).Error
 
 1. 在点赞 , 关注操作中，在并发量大的情况下，如果恰巧多个点赞请求同时进入，第一个请求未执行完毕，其它请求通过数据库判断未点赞时，会导致连续执行了多次点赞操作。为了保障接口的**`幂等性`**，考虑使用 **Redis** **`分布式锁`**的解决方法。当点赞时尝试获取点赞锁，若获取成功则释放 取消点赞锁 继续执行后续操作。
 2. 解决缓存穿透问题：使用**布隆过滤器** 添加数据的 ID ， 或者每次查询到不存在数据时在 redis 中缓存空值        解决缓存雪崩问题：每次生成redis key 的时候 TTL 添加随机值                                             
-3. 限流 【暂未实现】
+3. 限流 ：采用熔断器进行限流，后续增加针对某个 ip 进行限流
 
 ##### 远程调用重试机制
 
@@ -283,11 +294,138 @@ for i := 0; i < retryLimit; i++ {
 }
 ```
 
+##### 熔断和降级
+
+为了在高并发场景下，保护后端服务，提高系统的可靠性。在 Gateway 层 `wrappers` 包下设置了熔断器（针对 user , video , relation 的服务），以针对 user 服务为例，设置的参数如下：
+
+```Go
+func (wrapper *userWrapper) Call(ctx context.Context, req client.Request, resp interface{}, opts ...client.CallOption) error {
+    cmdName := req.Service() + "." + req.Endpoint()
+    config := hystrix.CommandConfig{
+        MaxConcurrentRequests:  3000, // 并发数上限
+        Timeout:                30000,
+        RequestVolumeThreshold: 20,   // 熔断器请求阈值，意思是有20个请求才能进行错误百分比计算
+        ErrorPercentThreshold:  50,   // 错误百分比，当错误超过百分比时，直接进行降级处理，直至熔断器再次 开启
+        SleepWindow:            1000, // 过多长时间，熔断器再次检测是否开启，单位毫秒ms
+    }
+    hystrix.ConfigureCommand(cmdName, config)
+    return hystrix.Do(cmdName, func() error {
+        return wrapper.Client.Call(ctx, req, resp)
+    }, func(err error) error {
+        return err
+    })
+}
+```
+
+熔断器的参数应该在后续的测试和实践中进行修改
+
+##### 防御恶意攻击
+
+1. **数据库加密**：密码的加密存储使用 bcrypt 算法，由于 bcrypt 算法加入了盐值，盐是一个随机生成的字符串，它与密码一起被哈希。由于盐是随机生成的，因此即使两个用户使用相同的密码，它们的哈希值也不同。这使得攻击者更难以破解密码。校验时，从hash中取出salt，salt跟password进行hash；得到的结果跟保存在DB中的hash进行比对
+2.  **IP** **限流与封禁：**使用 Nginx 的 `ngx_http_limit_req_module` 模块对 IP 进行限流，防止恶意 ip 的攻击
+   1.  在 Nginx 层设置每个 ip 每秒限制 10 个请求，允许突发达到 20 个每秒
+
+   2.  Nginx.conf 的部分内容如下：
+
+```Go
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+
+    sendfile        on;
+    
+    keepalive_timeout  65;
+
+    limit_req_zone $binary_remote_addr zone=mylimit:10m rate=10/s;
+
+    server {
+        listen       8010;
+        server_name  0.0.0.0;
+
+        upstream targetserver{
+        server 127.0.0.1:8080;
+
+    }
+
+        location / {
+            limit_req zone=mylimit burst=20nodelay;
+            proxy_pass http://targetserver;
+        }
+        ......
+```
+
+在 GateWay 层使用 Redis 用 ip作为 key , 每秒请求的次数作为 value 
+
+##### 系统监控
+
+> 项目运行在 172.28.158.98 服务器上， **`Prometheus`**  **和** **`grafana`**  运行在 172.28.158.130 服务器上，
+>
+> 这两台服务器均为 内网服务器，之间的带宽为 2G ，装有 centos8 操作系统
+
+本项目采用 **`Prometheus`** **和** **`grafana`** 进行系统监控，使用 grafana 对 Prometheus 搜集到的数据进行可视化监控
+
+下面以监控 user 服务为例子进行介绍
+
+Prometheus.yml 如下 （用于 docker 运行 Prometheus）
+
+```YAML
+global:
+  scrape_interval:     15s # By default, scrape targets every 15 seconds.
+
+  # Attach these labels to any time series or alerts when communicating with
+  # external systems (federation, remote storage, Alertmanager).
+  external_labels:
+    monitor: 'codelab-monitor'
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: 'prometheus'
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['172.28.158.98:8070']
+```
+
+然后在 main.go 中加入以下的部分代码
+
+```Go
+func PrometheusBoot() {
+    // 创建 HTTP 处理器
+    h := promhttp.HandlerFor(
+       prometheus.DefaultGatherer,
+       promhttp.HandlerOpts{},
+    )
+    http.Handle("/metrics", h)
+    // 启动web服务，监听8085端口
+    go func() {
+       err := http.ListenAndServe("0.0.0.0:8085", nil)
+       if err != nil {
+          log.Fatal("ListenAndServe: ", err)
+       }
+    }()
+}
+```
+
+项目和 Prometheus 启动后 ， 进入 http://172.28.158.130:8060 看到服务已经成功注册
+
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=ZDIzMTFhY2RhZGJjMDY3YTNmYTRjMTM0OTI1NDdkYThfZzBxdk1OMkFabG5QbXJ1QnN3MXJEbkYzNjQybmJpWkhfVG9rZW46WVlxSGJhUDRtb1k3N2x4dzI2amNqeTBEbkZlXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
+
+运行 grafana 容器 `docker run -d -p 3000:3000 grafana/grafana`
+
+在服务器上运行 **grafana** 容器后，连接对应的   Prometheus  数据源，可在 web 的数据面板看到监控服务的数据
+
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=MWUxZTRhYWEwMmZlYzI2NjAxOGNmMjY5ODlhMjYzNDVfMUVPRUozbDZLN0NqdnJuaTJOQ2E4ZVpLZnBvVllVQ1JfVG9rZW46WVNsS2J3a0Mxb3FGODh4U1ViRWNZQVlNblJmXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
+
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=MzU1MjJjZDI0N2NjNzZjZjkzNTdjYTkyZTJmNzBiODBfTmFuQzM1RGZ3VmtJeVN3YVVnamhxaUZWYmh1N3hSZkpfVG9rZW46WnNYZGJzeEVab05lOWF4YWN0a2MxMUtubkZjXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
+
 #### 3.2.2 GateWay  及公共组件 功能设计
 
 ##### 登录鉴权
 
-使用两层中间件`middleware`对网关收到的所有请求进行预处理，分别为*`RefreshHandler和AuthAdminCheck()`**，用于redis中的token刷新，**`AuthAdminCheck()`**用于登录校验*
+使用两层中间件`middleware`对网关收到的所有请求进行预处理，依次为 *`AuthAdminCheck()`**和* *`RefreshHandler`**，用于redis中的token刷新，**`AuthAdminCheck()`**用于登录校验*
 
 *`RefreshHandler`**的具体实现：*
 
@@ -312,6 +450,53 @@ var notAuthArr = map[string]string{
     "/douyin/user/register/": "1",
     "/douyin/user/login/":    "1",
     "/douyin/user/":          "1",
+}
+```
+
+Router 代码如下 
+
+```Go
+import (
+    "douyin-microservice/app/gateway/http"
+    "douyin-microservice/app/gateway/middleware"
+    "github.com/gin-gonic/gin"
+)
+func InitRouter() *gin.Engine {
+    r := gin.Default()
+    r.Use(middleware.Cors())
+    // public directory is used to serve static resources
+    r.Static("/static", "./public")
+    //所有请求都需要两层拦截器
+    apiRouter := r.Group("/douyin")
+    {
+        v1 := apiRouter
+        v1.Use( middleware.AuthAdminCheck(),middleware.RefreshHandler())
+        {
+            v1.GET("/feed/", http.FeedHandler)
+            v1.POST("/user/register/", http.RegisterHandler)
+            v1.POST("/user/login/", http.LoginHandler)
+    
+            //apiRouter2 := r.Group("/douyin")
+            // extra apis - I
+            v1.POST("/favorite/action/", http.FavoriteActionHandler)
+            v1.GET("/favorite/list/", http.FavoriteListHandler)
+            v1.POST("/comment/action/", http.CommentActionHandler)
+            v1.GET("/comment/list/", http.CommentListHandler)
+            //
+            //// extra apis - II
+            v1.POST("/relation/action/", http.RelationActionHandler)
+            v1.GET("/relation/follow/list/", http.FollowListHandler)
+            v1.GET("/relation/follower/list/", http.FollowerListHandler)
+            v1.GET("/relation/friend/list/", http.FriendListHandler)
+            v1.GET("/message/chat/", http.MessageChatHandler)
+            v1.POST("/message/action/", http.MessageActionHandler)
+    
+            v1.GET("/user/", http.UserInfoHandler)
+            v1.POST("/publish/action/", http.PublishHandler)
+            v1.GET("/publish/list/", http.PublishListHandler)
+        }
+    }
+    return r
 }
 ```
 
@@ -340,7 +525,7 @@ func NewCommonEntity() CommonEntity {
 
 ##### 雪花算法生成分布式ID
 
-由于本项目是分布式系统，而且抖音后端面临的是庞大的用户群体，高并发量以及庞大的数据量可能需要数据库的分库分表。传统的自增 ID 难以在这种情况下正常运作。因此本项目所有的 ID 均采用雪花算法生成
+由于本项目是分布式系统，而且抖音后端面临的是庞大的用户群体，高并发量以及庞大的数据量需要数据库的分库分表。传统的自增 ID 难以在这种情况下正常运作。因此本项目所有的 ID 均采用雪花算法生成
 
 本项目对雪花算法进行了封装 见项目中的/pkg/utils/Snowflake.go文件
 
@@ -464,6 +649,16 @@ type VideoDVO struct {
 7. 调用`wg.Wait()`方法，等待所有协程完成。
 8. 检查协程内是否存在错误，如果有，则返回错误信息。
 9. 返回`VideoDVOList`切片和`nil`错误。
+
+**文件类型检查:** 在接口中，用户需要上传视频保存到服务器。但是若有人利用此接口上传恶意文件或者木马，则会造成严重的危害，因此考虑使用`h2non/filetype` 包进行文件类型检查
+
+在 impl 文件中加入了如下代码进行文件类型检查
+
+```Go
+if filetype.IsVideo(data) {
+    return errors.New("视频格式异常！")
+}
+```
 
 #### 3.2.5 Favourite 功能设计
 
@@ -716,10 +911,24 @@ type FollowMQToUser struct {
 ##### 聊天记录 /douyin/message/chat/
 
 1. 调用 `utils.AnalyseToken(token)` 函数对 token 进行分析，获取用户信息并存储在 userClaim 中，并以此获取用户的 ID 。如果分析出错，则返回空的 []models.MessageDVO 和错误信息。
-2. 调用  `models.FindMessageSendEventByUserIdAndToUserId(userId, toUserId)`  函数查找消息发送事件表中指定用户发送给指定用户的记录，并将结果存储在· messageSendEvents· 变量中。如果查找失败，则返回空的  []models.MessageDVO 和错误信息。
-3. 调用  `models.FindMessageSendEventByUserIdAndToUserId(toUserId, userId)`  函数查找消息发送事件表中指定用户接收到指定用户发送的消息的记录，并将结果存储在 `messageSendEventsOpposite`  变量中。如果查找失败，则返回空的 []models.MessageDVO 和错误信息。
-4. 将 `messageSendEvents` 和 `messageSendEventsOpposite` 合并成一个列表，并按照创建时间进行排序。 `sort.Sort(models.ByCreateTime(messageSendEvents))`
-5. 用多协程并发将排序后的消息数组组装成 `MessageDVO` 数组
+2. 判断传入的时间戳 `pre_msg_time` 的值 分别 处理
+   1. ```Go
+      var preTime time.Time
+      if preMsgTime != "0" {
+          me, _ := strconv.ParseInt(preMsgTime, 10, 64)
+          preTime = time.Unix(me, 0)
+          if preTime.Year() > 9999 {
+             preTime = time.Unix(me/1000, 0)
+          }
+      } else {
+          preTime = time.Unix(0, 0)
+      }
+      ```
+3. 调用  `models.FindMessageSendEventByUserIdAndToUserId(userId, toUserId, preTime )`  函数查找消息发送事件表中指定用户发送给指定用户的记录，并将结果存储在· messageSendEvents· 变量中。如果查找失败，则返回空的  []models.MessageDVO 和错误信息。（若`pre_msg_time` 不为 "0" 则不调用此函数，因为后续新增的消息需要剔除本人发的）
+4. 调用  `models.FindMessageSendEventByUserIdAndToUserId(toUserId, userId, preTime )`  函数查找消息发送事件表中指定用户接收到指定用户发送的消息的记录，并将结果存储在 `messageSendEventsOpposite`  变量中。如果查找失败，则返回空的 []models.MessageDVO 和错误信息。
+5. 将 `messageSendEvents` 和 `messageSendEventsOpposite` 合并成一个列表
+6. 用多协程并发将排序后的消息数组组装成 `MessageDVO` 数组
+7. 对`MessageDVO` 数组按照 `CreateTime`时间戳升序排序
 
 MessageDVO 的结构如下 
 
@@ -736,7 +945,7 @@ type MessageDVO struct {
 > 聊天记录功能的缓存优化方向 （暂未实现）：
 >
 > 1. 使用 redis 的 Sorted Set 数据结构， key 为 userId 和 toUserId  的组合，表示两个人间的聊天记录，value存储聊天记录的集合，score 取每条聊天记录的时间戳，每个集合设置过期时间
-> 2. 使用分页请求加载聊天记录，redis 的集合中只储存部分聊天记录，redis 中的聊天记录取完再从数据库中查询，区别对待冷热数据，由于时间久远的聊天记录使用的频率较少，可以不存放在redis中
+> 2. 分页请求加载聊天记录，redis 的集合中只储存部分聊天记录，redis 中的聊天记录取完再从数据库中查询，区别对待冷热数据，由于时间久远的聊天记录使用的频率较少，可以不存放在redis中
 > 3. 新增聊天记录时往 redis 集合中 SADD 聊天记录，若对应的 key 不存在，则需要取出最新的20条聊天记录重建这个缓存集合
 
   
@@ -749,41 +958,41 @@ type MessageDVO struct {
 
 ##### 用户注册 /douyin/user/register/
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=MjFjNzE0OTZhOWVkYTIzOTJkMjEwYjdmNzliNDc3MzNfRlNMYmVxUzVrZjM0YmR1WUhOWGZmTkJwN1ljd1dvMzhfVG9rZW46SWNUNGJVV0pXb0xEb2p4aThBZmNmaUVMbnloXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=MDUyNDE0MWFlMmRiMDU1Zjg1ZDNlMGM5NDA3OTYzYzRfYUlZSURxMGZQcmlBYm1XcTRsUjI2ajFFWW96NVd2cXBfVG9rZW46SWNUNGJVV0pXb0xEb2p4aThBZmNmaUVMbnloXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 ##### 用户登录 /douyin/user/login/
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=NzdkYjU0NjQxODMwN2ZhMzE1ZDEzYjM1ZTdkYzU3MDJfMjhXRWhnd3BSTEhaMHZYSFQ4RUF3V0Z0eEVCc1ZZb1pfVG9rZW46S2hwMWJ3WUwxb0RXa3J4V0Z2TGMzV002bjBUXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=NjUyMDU5ZDdkNGE0YTE3NmQ4MmVhNjlhNTAyNjMzYTRfN1VEcVd2ckIwSk1wUDFzcEdnWWRxZzVaOTdFR3lZVU1fVG9rZW46S2hwMWJ3WUwxb0RXa3J4V0Z2TGMzV002bjBUXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 ##### 用户信息 /douyin/user/
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=NWIwNGZkNTA2YzUyODhlNThlYmRhMDY2MGRhMmYyMDRfZmRyOTBqTTJSVDU5Wmwybml6WHByaWphOVBmT2F6UzlfVG9rZW46VHozZ2JGb0Vjb3hsMTl4UVRhRmNuSTM5bldmXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=ZjBjNjA1OTBiYjM3MzEwNGZjNGJhYTJmNGYyOGVjNTBfT0JKTVdRdFdMbExtakFnWW1wMFBrbFhRQ1lkMVNNckxfVG9rZW46VHozZ2JGb0Vjb3hsMTl4UVRhRmNuSTM5bldmXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 #### Video接口
 
 ##### 视频流接口/douyin/feed/
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=NTY2NmViYTg4OGEzZWU2MzhmMzBkZWEwZDYzOWUxNDZfV1ZiWGdpaFFUTzY3MTBacVJNOFA2d0pIQjUwWmRia2dfVG9rZW46SnoyN2IyRjdjb1E3UEx4T1A0YWNENm9WbkhlXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=NThhZmM1NTFiMDQwZTY1ZDBlYjg0OTgwODM3ZTcxYjFfU3R2TjFzRUdBa3lQZEV3SFlNWTVDdHlJQmdSa0hCN0tfVG9rZW46SnoyN2IyRjdjb1E3UEx4T1A0YWNENm9WbkhlXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 ##### 投稿接口 /douyin/publish/action/
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=OWY1NDliMDQxZTNjZWIyZGRkMzViMDM4ZTQwMDNmOWJfTnRLN21oaGRxQlNZZ044NGgwclp0Z3BwVlpNSlVmRVVfVG9rZW46V2Q5aGJTTEhhb0RHWUV4S1lpZmM4eEQ3bmdnXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=Mjg5YmVjMjAwNTY0MmIwMTE2ZjU2YjYxZDg0OTFhYmFfWHdOVXRrcWZHdUE4NFh6OWVsT0lJc0o3YkF2bkptcEZfVG9rZW46V2Q5aGJTTEhhb0RHWUV4S1lpZmM4eEQ3bmdnXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 ##### 发布列表 /douyin/publish/list/
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=ZGMyMzMzNzA5MDljOTcyYzU5MzkxMDkyY2JkYjIyZWVfVmxSc0NXdlFSNEJjR1RSUVhPOHNEREpQdFBRdHJVRVFfVG9rZW46SHRiaGJJSUxvbzNzQkx4UHpFd2NYdG0yblNoXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=ZWMwYmVmZGU4MWM4YTVjZmQ1ZDAwMGEwMGNlMzE4NjdfNU1WaFFZaHRySHpPQjZZQUMxZ3NxZXpyYWVPeHlJa1RfVG9rZW46SHRiaGJJSUxvbzNzQkx4UHpFd2NYdG0yblNoXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 #### Favourite 功能
 
 ##### 赞操作 /douyin/favorite/action/
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=YTQ1ODFhMGFkN2QyNWU3NTgzZWE3M2M4NzMxNDY3M2VfN0VWNmFMVkhZOEZpbzRaVk1GR1ZqalBJSlJGcWNVQVBfVG9rZW46QVhyMmJuZ3hVb1RJYnV4eTFQVmNJWDNsbkVjXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=N2ZlMjg2YjI1MTE2MzE3NWZlM2QxMjM5OWMxMWM4ZDBfRmtHVGZHZVRaVDJWUllYajlpcERlcFZIZ2xrb1JkTFFfVG9rZW46QVhyMmJuZ3hVb1RJYnV4eTFQVmNJWDNsbkVjXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 ##### 喜欢列表  /douyin/favorite/list/
 
 只有该接口的status_code为string类型，其他接口均为int类型，于是我们统一全为int型
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=ZTVmMjYzYTVmMzUzZjYxYTI4NThjZjBkY2ZiMjNhNDJfb091ZjVydk10YTRTUGp6eDlmYnFnelpNS3p0TGtRR0lfVG9rZW46QTc1V2JGRlFwb0RjQzd4dGtleWNmY293bkxlXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=NzUxOTE5OGViMTAzZTBiZDhkNGQwMmIyN2JkZjljNTFfcE9iUkZYa0ZweVg3MjNFanYyZ2tpWnZldnRkcnpkQjFfVG9rZW46QTc1V2JGRlFwb0RjQzd4dGtleWNmY293bkxlXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 #### Comment 功能
 
@@ -791,15 +1000,15 @@ type MessageDVO struct {
 
 - 发表评论
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=ZWI3YzQxNTk2NzAxNDM0MTg2ZGQyYTRkMTc2MGRmYzVfTXFYMTFXWG5SM20walJEYXRaTzhDMkltdUU5VTF6cm5fVG9rZW46WmNxOWJCWlpFb2J3R1p4ZTJObmNmSTNxbm5lXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=YTFkZDM5NDViYTBmNWQwMTczNjljMzQzZDlkYzYwNzNfcmR0ajJEa1JUelJKbExyT3JLRXFJOWZOSUNWOWhGTGlfVG9rZW46WmNxOWJCWlpFb2J3R1p4ZTJObmNmSTNxbm5lXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 - 删除评论
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=MjY2ZDllMzczNDBiZjFmOTk5MzAzMjVmMmNkNjVlNGFfOXJNMVhlY25aaEFRM3hQUFNSd0lLZ3lvbEJUNWRWYlVfVG9rZW46S2ZndWJMd2JGbzFuaDZ4eXlET2NIQ2M1blBmXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=YzQyYmE5MTkzODdmMjNkNTcwYTRjNjc1OTc1YjQ3ODlfakVueU1zNTBjNG5FZWdHVFh4YTFRdXRhNkpXczJvaW5fVG9rZW46S2ZndWJMd2JGbzFuaDZ4eXlET2NIQ2M1blBmXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 ##### 评论列表 /douyin/comment/list/
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=NmEwMDU0MDZjODcwMjc1MTUwYTU5OTUzMjQzOWIyMjVfM1VTaTNiWXQ5aTFkZ1RNRFRNVzFNYkVFY3FvVkRNZzZfVG9rZW46UWgydGI1V3VZb240bmF4Y05uSmNFV1FzbkljXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=OTQ4ZmRlZGIwYzllNjIwZjdmYjU3NGE2Y2RkMTU1ODlfWnd1QjQ2MWkya1JVOGoyS1ZacThHTVhVWFNLOVVGbjRfVG9rZW46UWgydGI1V3VZb240bmF4Y05uSmNFV1FzbkljXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 #### Relation 功能
 
@@ -807,45 +1016,47 @@ type MessageDVO struct {
 
 - 关注
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=MWQ4NDI2OWFiZTM3OGIwNTQ2MWVjNDMwNTQ0YjNkN2VfbzNsdFFXZ0JIRXhLRDVKT1hScFZERlhuUVB2VFM0TEdfVG9rZW46T0p6cGJsdDNSbzY4a0F4UTI1V2M0V1hIbldoXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=NGNkOWVhY2JhOGYxNWVkNWFkYTk3NWNlZDI2MWJhMTFfR1J3ZkNoZ2JKUFNWcUkxdkdUYTRqdFExNm9US2pRcUZfVG9rZW46T0p6cGJsdDNSbzY4a0F4UTI1V2M0V1hIbldoXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 - 取消关注
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=YWI1MDgyMWFmODU4NGM0MDg3NmY2YjUwM2I5MTc3NDhfSGZCWGFsU1VPYXZjeTRONkFmY3NKWFJGdEZyZHQ5TmFfVG9rZW46WGNIY2JFRzFvb2lWaFJ4ZDE1emN5MUFFbmhmXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=YjljMjA4Y2NlYjg1NmIxZWJjNzEyMjg0NDU5YzIxMDFfUllMMUNveHlYb040MzNqWmRuTnNhRTJQZEpZbnJxYXdfVG9rZW46WGNIY2JFRzFvb2lWaFJ4ZDE1emN5MUFFbmhmXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 ##### 关注列表/douyin/relation/follow/list
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=YTZiMjk0ZjA4ZWE1NzgwNTE5ZjY2MTI1OTExMzgxOWJfOTVlWnNad002eUJMaWozYzd1cWpPaWlJUVhreUptUFhfVG9rZW46UlhwZmJ2d0Qxb2FYRkh4ODR2WWNXRnRnbjVwXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=MjdiMzQwOTU3ZTQyM2Q4ZjMwNTAxMWNiYTRiYzczZGVfdEpYVHdhYzU2VkNSYmtpaUtCaFVZcXhNWEU4Nlo1NHZfVG9rZW46UlhwZmJ2d0Qxb2FYRkh4ODR2WWNXRnRnbjVwXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 ##### 粉丝列表  /douyin/relation/follower/list/
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=Y2M5NTQxNTRmZjc0MzYxNTk2NmQ0NmRhNmU2OTc5ZDBfbFMyZ0tWTDFCWkpmeEFjWVc2cDZQY0NjZnZCQU5tY1NfVG9rZW46T1pWUmJUbkhqb1F4eTJ4SGdtSWNyaGdBbnVoXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=ZmNkMzMzZmNlNzhlYzQyOTQ3ZGY2MDhmMTQ0NGU2YjRfS05ENm9mWnZ5ZDF4Z0luUmhCTzN1NTh3V00wbmJINWxfVG9rZW46T1pWUmJUbkhqb1F4eTJ4SGdtSWNyaGdBbnVoXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 ##### 好友列表 /douyin/relation/friend/list/
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=ZjI4Yjk2YzRiYjYyMzM0ZTgxMjY3NzkwOWFjMWFiNjZfYW02SVhPeVlWUXd6VVpmeUl1MXBqdDd3NG5LYmpheDZfVG9rZW46QTNKdWJvVVk2b1VTSFV4MU80ZGNCN2pabjRlXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=NWQyZmFjMjE4NTA1M2Q5OTdlZTU0MzgwYzBjZGE1YjdfWklwUFZ5V0NvVGI2SlRmZ1N3UmRCcElhRGV6Uk9ESkZfVG9rZW46QTNKdWJvVVk2b1VTSFV4MU80ZGNCN2pabjRlXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 #### Message 功能
 
 ##### 发送消息 /douyin/message/action/
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=MDU4MTAzY2UxNzEwNThjZGNhYTY3N2Q0ODdmYjkwMzFfTUR6TGg5TUxIeXlWUXV2SGpPWVBNNjBNS2JIUjFkYlJfVG9rZW46VWZqTmI2czh2b0hlQVN4THJqN2NGWDJYbm5jXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=MjM3NjU5Yjc4ZWU1MWU4ZGJjODRkY2M1MTE0ZGUwZTBfSkhUZlJRUlRHRnVkd2NUYTVUaTM4Vng3am9jaHliUmhfVG9rZW46VWZqTmI2czh2b0hlQVN4THJqN2NGWDJYbm5jXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 ##### 聊天记录 /douyin/message/chat/
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=NmYzZGQ5MjJhZTRlZmI0MGZhNjA2N2ZlMjQ4OTgzYzlfZGlYYmdYYWw1b3Q1ZDV5VHgxWTFDWUFnekxGWnE4ajJfVG9rZW46UXlyZ2IyT0prb3dZWGJ4d082cmM1OFdabm5kXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=NjViNTg4NmFkZjNiY2YzZTY3NTg4ZDEwZmRlYjhhZmJfMUF4RFJxRU5PM0dUV3FpWHIwWlZBZHRCWXE5TGNjOVNfVG9rZW46RFl6YmJwamdYbzhuMEF4UWtNQWMzM1ltbmxiXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 ## 性能测试
 
 测试硬件条件：
 
-**本项目**，**redis ，****jmeter** **，（****etcd****,****mysql****,rabbitmq）**分别部署在**四台****云服务器**上，均为 centos8 操作系统
+(**本项目，****etcd****)**，**redis ，****jmeter** **，（****mysql****,rabbitmq）**分别部署在**四台****云服务器**上，均为 centos8 操作系统
 
 其中 redis ， jmeter , 本项目 所在的服务器均为 **32G** **内存** **， 8核**，这三台服务器间的带宽为 2G 。
 
-Mysql 所在的服务器配置是 **4G****内存** **，2 核**
+Mysql 所在的服务器配置是 **2G****内存** **，2 核**
 
-所有测试均使用 centos8 下的 jmeter 进行
+所有测试均使用 centos8 下的 jmeter 发请求
+
+（由于受到本地Windows系统的配置，带宽和网络情况影响，故使用和项目部署的云服务器同一个子网下的一台 32G 内存 8核 的centos8 服务器上部署 jmeter）
 
 #### 测试项目1：高并发随机点赞/取消点赞测试
 
@@ -877,11 +1088,11 @@ jmx文件部分内容
 
 1. 使用 jmeter 进行一分钟持续压测
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=OTZjZDI3YjhmNzBmODM4MmM4ZGU5ZGRjMjM0YThiMjdfRE0wZnI2czFmNDFaSUhZS3BabFd1aVpMb0R3NUlBVkNfVG9rZW46U1JmRmJZN3VZb0x3T1p4Q1FnMmNJY3lvbkl4XzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=YjY2NzE2Njk5ZjM4OGZkMWY0NTU2OWIzNGM4OGM5NWRfTE9BZmN6cEFNY3JLbEY4MENGV0cwaVNUMzlKMVIyWnpfVG9rZW46U1JmRmJZN3VZb0x3T1p4Q1FnMmNJY3lvbkl4XzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 1. 得到测试报告如下
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=MmNiNjFmMTYxZmNhYjhlMjRkODk1YTMzMTk4NWVmZjhfS1BuY3RobXpPMzdmYWphRUVibnoxTU9PUXNQdXh5TGVfVG9rZW46TmtsemJ5b1Z1b3lSRVp4QVBoRGNXRG9ubkFnXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=NmU5MWIwMDRkY2E5MjI1MjVjOTkwMWQ5NGM0NTFmOTlfSHVmbnR5a28yTzJnQ3VWUDFRdmJySXBrYlRVcWk5QjZfVG9rZW46TmtsemJ5b1Z1b3lSRVp4QVBoRGNXRG9ubkFnXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 可见在每秒吞吐量 18000 以上的巨大压力下，平均响应时间仅为 25ms 左右，可见 消息队列 的异步操作保障了用户的流畅体验感。对比测试前后的 user ， video ,  like 表的数据，并对测试的csv文件计算得到的数据进行比较
 
@@ -914,13 +1125,126 @@ jmx文件部分内容
 1. 开启 jmeter 进行一分钟压测，同时使用 apifox 发送多次 点赞/取消点赞请求
 2. Jmeter 压测报告如下
 
-![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=NGQ2Y2NhZDg0OWVkYTZlNWM3MzAzZjI3MjA1YjUzYjZfcVBQcmczWnQ5aEgyTlZLb1QzSGJiV29UU3B5MmQyaDdfVG9rZW46VjJQbmJidWhXb1BXOW14M0RRVmNYdlNDbkVnXzE2OTI3NzQ1MDY6MTY5Mjc3ODEwNl9WNA)
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=ZWYxYmYyOWMyNmQ4NWI4YmQwNGQ4ZmQwNzgzYWQxODlfU1hTck1SdVF4MmhsRnllblNSWERnU3B1MXJFNjNZSEpfVG9rZW46VjJQbmJidWhXb1BXOW14M0RRVmNYdlNDbkVnXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 在每秒超过 17000 的吞吐量请求下 ， 观察 mysql 和 redis 中的点赞/取消点赞情况保持一致，没有出现数据不一致和脏数据
+
+#### 测试项目3：高并发查询用户信息压测
+
+Jmeter 压测报告如下
+
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=YmI4YjU5N2UyYTczZGY0ZWNiNGRmOWJmM2MzNTE0OTNfaGlDNnV0NDlBV29UOUh6cDI1M1JTazJJUFRPZjdVWjJfVG9rZW46VmRRb2JNVjRVb1Q2WER4aG00TWNKS2NhbkdjXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
+
+#### 测试项目4：评论功能压测与优化
+
+初始的评论部分代码是这样的
+
+```Go
+func (commentService CommentServiceImpl) PostComments(comment models.Comment, video_id int64) error {
+     var req pb.UserRequest
+     req.UserId = comment.User.Id
+     resp, err := rpc.UserClient.GetUserById(context.Background(), &req)
+     if err != nil {
+      return err
+     }
+     user := BuildUser(resp.User)
+    bloomFilter.BloomFilter.Add([]byte(strconv.Itoa(int(comment.Id))))
+
+    toMQ := models.CommentMQToVideo{
+        CommonEntity: comment.CommonEntity,
+        ActionType:   1,
+        UserId:       user,
+        VideoId:      video_id,
+        Content:      comment.Content,
+        CommentID:    -1,
+    }
+    mq.CommentChannel <- toMQ
+    return nil
+}
+```
+
+进行了压测后结果非常不理想，如下图所示
+
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=ZGY0NzQ0Y2MxN2U5NzRmNDM5YjA3YjY0NWZmNDg4NDVfUWVKNFFuR3RDVnJVd1Bab1dQWWhuSG9jTjhtRVc0NXdfVG9rZW46RmR2YWJTd0xtbzQ3Y1J4WUhRMGNVTHkybmRlXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
+
+当每秒处理请求数到 150左右时就出现了 error ， 而且平均时延高达 1.6秒，最大时延超过了30秒 。这显然是难以接受的，这将给用户带来极差的体验。
+
+后来经过很多次的排查和压测，发现了速度瓶颈在于  mq.CommentChannel <- toMQ ，将消息放入 channel 的这行代码。在请求高峰下，并发向 channel 添加数据导致性能急剧下降，而且消费速率远低于生产速率，channel 的内的消息数很快到达缓冲容量，导致阻塞发生。
+
+后来考虑使用 创建协程 异步加入 channel 的方法来降低用户时延，使得这段高时延的情况不被用户感知
+
+```Go
+func channelPut(msg models.CommentMQToVideo) { 
+    mq.CommentChannel <- msg
+}
+
+func (commentService CommentServiceImpl) PostComments(comment models.Comment, video_id int64) error {
+     var req pb.UserRequest
+     req.UserId = comment.User.Id
+     resp, err := rpc.UserClient.GetUserById(context.Background(), &req)
+     if err != nil {
+      return err
+     }
+     user := BuildUser(resp.User)
+
+    bloomFilter.BloomFilter.Add([]byte(strconv.Itoa(int(comment.Id))))
+
+    toMQ := models.CommentMQToVideo{
+        CommonEntity: comment.CommonEntity,
+        ActionType:   1,
+        UserId:       user,
+        VideoId:      video_id,
+        Content:      comment.Content,
+        CommentID:    -1,
+    }
+    go channelPut(toMQ)
+    return nil
+}
+```
+
+优化后的压测，用户感知的性能得到很大的提升
+
+也起到了在评论流量洪峰下对于用户体验的保障作用
+
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=Yjg1OWM1NTZmNTIzNDVkNDY0YjgyZDFhNmYxMDQ2ZDZfbkNGa0Z0VFduZWROMTEwSFM3NGt3SXZoTWdhTFJPZmhfVG9rZW46SzR5Y2IwdFg3b3RJV1F4SEVMS2NOdDMybjVmXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
+
+经过了比较长时间后，数据库才更新完毕数据，由于有了 channel 的削峰，数据库能在低水平的压力下运行。避免了数据库的压力突增导致的数据储存失败甚至宕机的出现。
+
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=OTJmZWJlZTIyNmZlOTU1MGM1NjExMDliNWZlOThkZjBfSTE3Rk12R0cwQkVvMDJnc096UXBnWHhEZThTY3FkVTFfVG9rZW46TmhCVWJpbVFXb0luRVV4ZDNIeGMxWkg0blBnXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
+
+查看数据库 所在服务器  (2G 2核) ， 并没有造成巨大的压力
+
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=NmZiYTIwZjI5ZDY0YWQ1NmJjMmFmZjIxYzI5NDlkYTNfQmt2QWZVMFM5RUh0UUhoV3JkR0Zyd2xmVURMbXlucXFfVG9rZW46UHhrYmIzaEl3b2pOSGN4bGtrTGNUNGFFbktlXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
+
+在线上运行时，若遇到评论量突增，用户评论的体验稳定性也能得到保障，为后续的扩容处理争取时间。在检测到 channel 数据压力增大时，可动态地对数据库集群进行平滑扩容从容应对。避免了突增的请求直接将数据库击垮的危险。
+
+#### 测试项目5 ：索引优化查询性能对比
+
+在关注相关的接口中需要调用 `FindByUserIdAndVedioId()` 函数，该函数通过 GORM 构造的一个 SQL 查询例子是
+
+```SQL
+SELECT * FROM follow WHERE user_id = 517753093834674727 AND follow_user_id = 264013038577388680 AND is_deleted = 0;
+```
+
+在经历了多次高并发测试后， follow 表内有至少 **110 万行**数据 。对该表执行以上 SQL 语句后发现耗时超过 0.4s
+
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=MzMwYjBhZmY0ZjA2OTBlYmUwZTQ3YzhkZWVhZWJlZTRfcWhEZFo2RGNFRVFJbFI0MHFnNHRxZmllbXpmcEFCemlfVG9rZW46SzZxR2IxWjFZb2M1dHB4bHFqdWNFZWpPbkNnXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
+
+当给该表的 `user_id` 和 `follow_user_id` 添加了联合索引 user_and_follow （数据结构为B+树）后再次执行该 SQL 语句测试，耗时仅为 0.016秒。速度**提升了近30倍**。显然经过了我们的索引优化后，在大数据量下性能大大提升。
+
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=OWU4M2UzM2M2ODdlNjhjY2M0OWUyNzA1ZGI0M2Y2NzVfcHJKZTUxQXJhRm9QekxNV0NKZlNJZU9KVEdTUkJMMGpfVG9rZW46UWdaeGJRb0Jwb296ZlR4ZTFPUGNkY1Rqbng2XzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
+
+通过 explain 查询执行计划时，也证明该 SQL 使用了联合索引
+
+![img](https://da0sq9guct3.feishu.cn/space/api/box/stream/download/asynccode/?code=ZGY0OTNmMWRhOGJlYTRiZWIzY2I5MmU3MDQ5Yzk3Y2VfUVRJTUJvVkNHODhGWk5xMVQzeDNTcmFTWU9KRXkyb21fVG9rZW46UjZid2JTNG5Wb1ZsUWh4RjE5SGNuUFZGbjBmXzE2OTM1NDA0NTQ6MTY5MzU0NDA1NF9WNA)
 
 # 五、Demo 演示视频 
 
 **请开启声音观看**
+
+暂时无法在飞书文档外展示此内容
+
+**下面是单独演示聊天功能的视频**
 
 暂时无法在飞书文档外展示此内容
 
@@ -930,17 +1254,24 @@ jmx文件部分内容
 
 1. 目前使用 `setnx` 实现分布式锁在 redis 分片集群或者主从集群中可能会失效，并不是一个高可用的分布式锁。当两个 redis 结点没有及时进行数据同步可能导致另一个线程在另一个结点再次获取了 锁 引发并发问题。因此后续考虑采用 RedLock 算法改进或者使用 Zookeeper 等其它组件实现分布式锁
 2. 本项目中可能存在的 `大key问题` . 如在本项目的点赞功能中，如一个用户点赞了成千上万个视频，那 redis 缓存中的 like set 会出现有数千个元素的集合，由于 redis 是单线程的，因此要避免大 key 的出现 。改进方案是进行大 key 的拆分。可以把一个 like set 拆成多个集合。 而且很久以前点赞过的视频可能再也不会刷，这部分数据变成了冷数据，不应该在 redis 中占用空间。所以要考虑将这部分的点赞记录不存放于缓存中。
-3. 本项目中未采用路径追踪技术，而路径追踪有助于分析和监控微服务间的通信，并进行系统监控
+3. 本项目中未采用链路追踪技术，而路径追踪有助于分析和监控微服务间的通信
+4. 本项目中，服务内涉及的异步削峰操作没有使用 rabbitmq 进行，而是使用 channel ，虽然性能开销较小，但是却导致并发量受限和存在无法可靠地存储大数据的问题。Channel 没有提供类似于消息持久化、重试、消息确认等高级的消息队列功能，在数据可靠性上不如专门的消息队列。由于在本项目中，点赞，评论，关注等更新本服务的数据为一次性操作且失败率较低，对于性能的追求高于可靠性，故没有像服务间那样使用 rabbitmq 消息队列，而是使用 channel .
+5. 使用 Kafka 和 ES 搜集分析日志数据
+6. 未实现自动化编译部署方案
 
 ## 架构演进的可能性
 
 1. 在针对多机房分布式部署的情景下，采用 Redis 分片集群的方式部署
-2. 由于时间原因，目前的 mysql 数据库的不同服务并没有分库（但是已经解除了耦合），后期考虑拆分成三个数据库 video , user , relation 。 随着用户数量的增长，数据量会变得很庞大，因此要考虑进行分库分表和读写分离。
+2. 由于时间原因，目前的 mysql 数据库没有进行水平分表，  随着用户数量的增长，数据量会变得很庞大，因此要考虑进行水平分表和读写分离。
 3. 后期在项目中可以引入 大数据分析功能，使用消息队列对数据进行离线处理，分析用户画像，并训练使用推荐算法针对不同用户推送个性化的视频
 4. 引入 Hbase 存储好友关系和社交网络。HBase 支持范围查询和前缀查询等功能，这对于查询某个用户的好友列表、共同好友等功能是非常有帮助
 5. 由于时间原因， 本项目中未采用负载均衡技术。但是在真实场景中，抖音后端将面临庞大请求压力，故需要使用 Nginx 进行多级负载均衡。
+6. 考虑使用 `channel 池`的思路对使用 channel 进行削峰进行优化，一开始创建若干 channel ，生产数据的时候放入其中一个 channel , 以此提高稳定性，避免出现单一 channel 数据积压导致阻塞等问题
+7. 后续考虑引入 GPT （如：讯飞星火大模型） ， 通过对讯飞星火 API 的调用，实现给用户提供**语音识别输入功能（讯飞星火语言识别API），视频合规鉴别功能（讯飞星火视频合规API），智能生成视频标题，评论功能（GPT按照关键字生成）， 根据用户对视频的评论的褒贬程度影响后续视频推荐 （讯飞星火****情感分析****API）**
 
 ## 项目过程中的反思与总结
+
+**项目过开发程中遇到的问题**
 
 1. 在 user 的点赞操作消费函数中，存在一种情况是 用户自己点赞自己，由于开启了事务，而且需要更新 TotalFavorited 和 FavoriteCount 两个字段。起初发现这样同时更新同一行事务提交后只记录最后一次的更新。之后发现，是因为事务的默认隔离级别是 `可重复读` ，由于MySQL 的 MVCC 机制，两次更新前的读取都只读取到事务开始执行时的快照。
    1.  修改后的函数如下，设置了对是否更新同一行的判断
