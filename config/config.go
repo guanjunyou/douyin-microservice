@@ -78,7 +78,7 @@ var (
 	FollowerKey   string  = "follower:"
 	FollowKeyTTL  float64 = 3600
 	//filter
-	WordDictPath = "./public/sensitiveDict.txt"
+	WordDictPath = "/app/sensitiveDict.txt"
 )
 
 var MailPassword = os.Getenv("MailPassword")
@@ -111,7 +111,7 @@ var (
 
 // 首字母大写其他的包才能调用
 func ReadConfig() {
-	configFile, err := ioutil.ReadFile("config/configuration.yaml")
+	configFile, err := ioutil.ReadFile("/app/configuration.yaml")
 	if err != nil {
 		log.Fatalf("Error reading config file: %v", err)
 	}
