@@ -14,4 +14,4 @@ scrape_configs:
     # Override the global default and scrape targets from this job every 5 seconds.
     scrape_interval: 5s
     static_configs:
-      - targets: ['172.28.158.98:8060']
+      - targets: ['douyin-micro:8060']
