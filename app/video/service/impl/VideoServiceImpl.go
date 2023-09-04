@@ -9,7 +9,9 @@ import (
 	"douyin-microservice/idl/pb"
 	"douyin-microservice/pkg/utils"
 	"github.com/jinzhu/copier"
+	"github.com/zhenghaoz/gorse/client"
 	"log"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -21,6 +23,12 @@ type VideoServiceImpl struct {
 
 func (videoService VideoServiceImpl) GetVideoListByLastTime(latestTime time.Time, userId int64) ([]models.VideoDVO, time.Time, error) {
 	videolist, err := models.GetVideoListByLastTime(latestTime)
+	if userId != -1 {
+		// 用户登录，可以推荐视频
+		recommendList := getRecommendVideos(userId)
+		videolist = append(recommendList, videolist...)
+	}
+
 	size := len(videolist)
 	var wg sync.WaitGroup
 	VideoDVOList := make([]models.VideoDVO, size)
@@ -74,6 +82,17 @@ func (videoService VideoServiceImpl) GetVideoListByLastTime(latestTime time.Time
 	return VideoDVOList, nextTime, nil
 }
 
+func getRecommendVideos(userId int64) []models.Video {
+	var recommend []models.Video
+	ids, _ := utils.GorseClient.GetRecommend(context.Background(), strconv.FormatInt(userId, 10), "", 10)
+	for i := range ids {
+		videoId, _ := strconv.ParseInt(ids[i], 10, 64)
+		video, _ := models.GetVideoById(videoId)
+		recommend = append(recommend, video)
+	}
+	return recommend
+}
+
 // Publish 投稿接口
 // TODO 借助redis协助实现feed流
 func (videoService VideoServiceImpl) Publish(data []byte, userId int64, title string, filename string) error {
@@ -117,7 +136,26 @@ func (videoService VideoServiceImpl) Publish(data []byte, userId int64, title st
 	if err != nil {
 		return err
 	}
+	go InsertGorse(&video)
 	return nil
+}
+
+func InsertGorse(video *models.Video) {
+	//title := "合成高温超导体"
+	videoId := video.Id
+	timestamp := time.Unix(time.Now().Unix(), 0).UTC().Format(time.RFC3339)
+	//x := gojieba.NewJieba()
+	//defer x.Free()
+	//labels := x.Cut(video.Title, true)
+	item := client.Item{
+		ItemId:   strconv.FormatInt(videoId, 10),
+		IsHidden: false,
+		//Labels:     labels,
+		Categories: []string{"video"},
+		Timestamp:  timestamp,
+		Comment:    "",
+	}
+	utils.GorseClient.InsertItem(context.Background(), item)
 }
 
 // PublishList  发布列表

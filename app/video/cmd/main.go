@@ -65,5 +65,6 @@ func initDeps() {
 
 	mq.MakeCommentChannel()
 	impl.MakeCommentGoroutine()
+	utils.InitGorse()
 	//controller.GetUserService().MakeFollowConsumers()
 }

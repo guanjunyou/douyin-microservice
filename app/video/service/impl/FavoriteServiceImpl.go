@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/zhenghaoz/gorse/client"
 	"gorm.io/gorm"
 	"log"
 	"strconv"
@@ -320,6 +321,7 @@ func LikeConsumer(ch <-chan models.LikeMQToUser) {
 				video.FavoriteCount++
 				models.UpdateVideo(tx, video)
 				tx.Commit()
+				go SendLikeToGorse(msg.UserId, msg.VideoId)
 
 				userIdStr := strconv.FormatInt(msg.UserId, 10)
 				videoIdStr := strconv.FormatInt(msg.VideoId, 10)
@@ -371,6 +373,19 @@ func LikeConsumer(ch <-chan models.LikeMQToUser) {
 			time.Sleep(time.Millisecond * 1)
 		}
 	}
+}
+
+func SendLikeToGorse(userId int64, videoId int64) {
+	video, _ := models.GetVideoById(videoId)
+	timestamp := time.Unix(time.Now().Unix(), 0).UTC().Format(time.RFC3339)
+	utils.GorseClient.InsertFeedback(context.Background(), []client.Feedback{{
+		FeedbackType: "like",
+		UserId:       strconv.FormatInt(userId, 10),
+		Timestamp:    timestamp,
+		ItemId:       strconv.FormatInt(video.Id, 10),
+	}})
+	log.Println("添加gorse成功！")
+
 }
 
 // 重建缓存
