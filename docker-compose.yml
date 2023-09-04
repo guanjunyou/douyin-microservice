@@ -27,7 +27,7 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "6379:6379"
+      - "16379:6379"
 
   etcd:
     image: bitnami/etcd:latest
